@@ -1,0 +1,17 @@
+{
+  "project_id": "edgepilot-ai",
+  "api": {
+    "enabled": true
+  },
+  "db": {
+    "major_version": 15
+  },
+  "auth": {
+    "enable_signup": true,
+    "email": {
+      "enable_signup": true,
+      "double_confirm_changes": true,
+      "enable_confirmations": true
+    }
+  }
+}
