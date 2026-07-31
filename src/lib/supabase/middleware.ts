@@ -7,18 +7,26 @@ export async function updateSession(request: NextRequest) {
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const path = request.nextUrl.pathname;
+  const isApp = path.startsWith("/app");
+  const isAdmin = path.startsWith("/admin");
+  const isOnboarding = path.startsWith("/app/onboarding");
+  const isAuthPage =
+    path.startsWith("/login") ||
+    path.startsWith("/signup") ||
+    path.startsWith("/reset-password");
 
   if (!url || !key) {
-    // Demo mode: allow /app when ep_demo_user cookie is present.
-    const path = request.nextUrl.pathname;
-    const isApp = path.startsWith("/app");
-    const isAdmin = path.startsWith("/admin");
     const demoUser = request.cookies.get("ep_demo_user")?.value;
     if ((isApp || isAdmin) && !demoUser) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/login";
       redirectUrl.searchParams.set("next", path);
       return NextResponse.redirect(redirectUrl);
+    }
+    if (isAdmin) {
+      // Demo mode: admin UI is view-only metrics; block write assumptions.
+      return supabaseResponse;
     }
     return supabaseResponse;
   }
@@ -44,14 +52,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
-  const isApp = path.startsWith("/app");
-  const isAdmin = path.startsWith("/admin");
-  const isAuthPage =
-    path.startsWith("/login") ||
-    path.startsWith("/signup") ||
-    path.startsWith("/reset-password");
-
   const demoUser = request.cookies.get("ep_demo_user")?.value;
   const isAuthenticated = Boolean(user || demoUser);
 
@@ -66,6 +66,34 @@ export async function updateSession(request: NextRequest) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/app";
     return NextResponse.redirect(redirectUrl);
+  }
+
+  if (isAdmin) {
+    const role = (user?.app_metadata as { role?: string } | undefined)?.role;
+    const allowlisted = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const emailOk = user?.email ? allowlisted.includes(user.email.toLowerCase()) : false;
+    if (role !== "admin" && !emailOk) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/app";
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  if (user && isApp && !isOnboarding) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed_at")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile && !profile.onboarding_completed_at) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/app/onboarding";
+      return NextResponse.redirect(redirectUrl);
+    }
   }
 
   return supabaseResponse;

@@ -6,6 +6,10 @@ AI-powered sports betting **research** assistant. Compare odds, estimate expecte
 
 Tagline: *Research the edge. Control the risk.*
 
+## Your next actions
+
+If you are the project owner connecting services, start here: **[YOUR_NEXT_STEPS.md](./YOUR_NEXT_STEPS.md)** (Supabase + Stripe + smoke test).
+
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind CSS

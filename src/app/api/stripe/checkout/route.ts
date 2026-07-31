@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getStripePriceId, type PlanId } from "@/config/pricing";
+import { getSessionUser } from "@/lib/auth/session";
 import { getStripe } from "@/lib/stripe/client";
 
 const BodySchema = z.object({
@@ -30,8 +31,8 @@ export async function POST(request: Request) {
     interval = parsed.data.interval;
   } else {
     const form = await request.formData();
-    plan = (String(form.get("plan") ?? "pro") as "pro" | "elite");
-    interval = (String(form.get("interval") ?? "monthly") as "monthly" | "annual");
+    plan = String(form.get("plan") ?? "pro") as "pro" | "elite";
+    interval = String(form.get("interval") ?? "monthly") as "monthly" | "annual";
   }
 
   const priceId = getStripePriceId(plan, interval);
@@ -42,6 +43,9 @@ export async function POST(request: Request) {
     );
   }
 
+  const user = await getSessionUser();
+  const userId = user && !user.isDemo ? user.id : "";
+
   const origin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -49,11 +53,12 @@ export async function POST(request: Request) {
     success_url: `${origin}/app/settings?checkout=success`,
     cancel_url: `${origin}/pricing?checkout=cancel`,
     allow_promotion_codes: true,
+    client_reference_id: userId || undefined,
     subscription_data: {
       trial_period_days: Number(process.env.STRIPE_TRIAL_DAYS ?? 7),
-      metadata: { plan },
+      metadata: { plan, userId },
     },
-    metadata: { plan, interval },
+    metadata: { plan, interval, userId },
   });
 
   if (!session.url) {

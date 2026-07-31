@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { checkAiQuota } from "@/app/actions/entitlements";
+import { getSessionUser } from "@/lib/auth/session";
 import { createAIProvider } from "@/lib/providers";
+import { createClient } from "@/lib/supabase/server";
 
 const BodySchema = z.object({
   messages: z.array(
@@ -13,14 +16,60 @@ const BodySchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const quota = await checkAiQuota();
+    if (!quota.ok) {
+      return NextResponse.json({ error: quota.error }, { status: 402 });
+    }
+
     const json = await request.json();
     const parsed = BodySchema.safeParse(json);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
+
     const provider = createAIProvider();
     const result = await provider.chat({ messages: parsed.data.messages });
-    return NextResponse.json(result);
+
+    // Persist usage for live users when history consent is later enabled; count for quota now.
+    if (!user.isDemo) {
+      const supabase = await createClient();
+      if (supabase) {
+        const { data: conversation } = await supabase
+          .from("ai_conversations")
+          .insert({ user_id: user.id, title: "Research chat" })
+          .select("id")
+          .single();
+
+        if (conversation) {
+          const lastUser = [...parsed.data.messages].reverse().find((m) => m.role === "user");
+          if (lastUser) {
+            await supabase.from("ai_messages").insert([
+              {
+                conversation_id: conversation.id,
+                role: "user",
+                content: lastUser.content,
+              },
+              {
+                conversation_id: conversation.id,
+                role: "assistant",
+                content: result.content,
+                citations: result.citations,
+              },
+            ]);
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({
+      ...result,
+      quota: { remaining: Math.max(0, quota.remaining - 1), limit: quota.limit },
+    });
   } catch {
     return NextResponse.json({ error: "Unable to process request" }, { status: 500 });
   }

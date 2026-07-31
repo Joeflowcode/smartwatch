@@ -16,15 +16,18 @@
 - [x] Docs + `.env.example`
 - [x] Lint / typecheck / test / build green
 
-## Milestone 2 (next)
+## Milestone 2
 
+- [x] Persist bets/bankroll/onboarding to Supabase (demo fallback retained)
+- [x] Server-enforced plan gates on scanner/AI quotas
+- [x] Admin role middleware (`app_metadata.role` + `ADMIN_EMAILS`)
 - [ ] Live The Odds API HTTP implementation with retry/timeout
 - [ ] OpenAI tool-calling assistant wired to providers
-- [ ] Persist bets/bankroll/onboarding to Supabase
-- [ ] Server-enforced plan gates on scanner/AI quotas
-- [ ] Admin role middleware + live MRR queries
+- [ ] Admin live MRR queries
 - [ ] Alerts / watchlists + Resend emails
 - [ ] Affiliate click UI with disclosure
 - [ ] Feedback widget + screenshot upload
 - [ ] Playwright e2e for core flows
 - [ ] Feature-flagged arbitrage UI
+
+See [YOUR_NEXT_STEPS.md](./YOUR_NEXT_STEPS.md) for the human dashboard checklist.

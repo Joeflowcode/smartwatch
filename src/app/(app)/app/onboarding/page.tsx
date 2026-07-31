@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { completeOnboarding } from "@/app/actions/onboarding";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -12,9 +13,11 @@ export default function OnboardingPage() {
   const [isLegalAge, setIsLegalAge] = useState(false);
   const [responsible, setResponsible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
     const form = new FormData(e.currentTarget);
     const underage = form.get("underage") === "yes";
 
@@ -29,8 +32,42 @@ export default function OnboardingPage() {
       return;
     }
 
+    const sports = form.getAll("sports").map(String);
+    const books = String(form.get("books") ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const startingRaw = String(form.get("bankroll") ?? "");
+    const budgetRaw = String(form.get("budget") ?? "");
+
+    setLoading(true);
+    const result = await completeOnboarding({
+      displayName: String(form.get("displayName")),
+      country: String(form.get("country")),
+      region: String(form.get("region") || "") || null,
+      timezone: String(form.get("timezone")),
+      favoriteSports: sports,
+      preferredSportsbooks: books,
+      experienceLevel: String(form.get("experience")) as
+        | "beginner"
+        | "intermediate"
+        | "advanced",
+      startingBankroll: startingRaw ? Number(startingRaw) : null,
+      monthlyBudget: budgetRaw ? Number(budgetRaw) : null,
+      isLegalAge: true,
+      responsibleUseAccepted: true,
+    });
+    setLoading(false);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+
     document.cookie = "ep_onboarded=1; path=/; max-age=31536000";
     router.push("/app");
+    router.refresh();
   }
 
   return (
@@ -40,6 +77,7 @@ export default function OnboardingPage() {
           <CardTitle>Welcome — quick setup</CardTitle>
           <CardDescription>
             We collect only what we need for research preferences and compliance acknowledgments.
+            With Supabase connected, this saves to your profile.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -146,8 +184,8 @@ export default function OnboardingPage() {
 
             {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
 
-            <Button type="submit" className="w-full">
-              Complete onboarding
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Saving…" : "Complete onboarding"}
             </Button>
           </form>
         </CardContent>

@@ -1,30 +1,44 @@
 import Link from "next/link";
+import { getBankrollSettings, getRecentBetsForDashboard } from "@/app/actions/bankroll";
 import { LegalBanner } from "@/components/legal/legal-banner";
 import { Badge } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PLANS } from "@/config/pricing";
+import { getUserSubscription } from "@/lib/auth/subscription";
 import { formatAmerican } from "@/lib/betting/odds";
 import { createOddsProvider } from "@/lib/providers";
-import { getDemoSubscription } from "@/lib/stripe/entitlements";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const odds = createOddsProvider();
-  const [{ data: events, meta }, { data: quotes }, { data: evs }] = await Promise.all([
-    odds.getEvents(),
-    odds.getOdds({}),
-    odds.getEvOpportunities({ minEdge: 0 }),
-  ]);
+  const [{ data: events, meta }, { data: quotes }, { data: evs }, subscription, bankroll, recentBets] =
+    await Promise.all([
+      odds.getEvents(),
+      odds.getOdds({}),
+      odds.getEvOpportunities({ minEdge: 0 }),
+      getUserSubscription(),
+      getBankrollSettings(),
+      getRecentBetsForDashboard(5),
+    ]);
 
-  const subscription = getDemoSubscription();
   const plan = PLANS[subscription.plan];
+  const bankrollAmount =
+    bankroll.ok && bankroll.settings ? Number(bankroll.settings.current_bankroll ?? 0) : 0;
+  const monthlyBudget =
+    bankroll.ok && bankroll.settings ? Number(bankroll.settings.monthly_budget ?? 0) : 0;
+  const maxStake =
+    bankroll.ok && bankroll.settings
+      ? Number(bankroll.settings.max_stake_percent ?? 0.02)
+      : 0.02;
 
   const bestByEvent = events.slice(0, 4).map((event) => {
     const eventOdds = quotes.filter((q) => q.eventId === event.id && q.market === "moneyline");
     const best = eventOdds.sort((a, b) => b.decimalOdds - a.decimalOdds)[0];
     return { event, best };
   });
+
+  const bets = recentBets.ok ? recentBets.bets : [];
 
   return (
     <div className="space-y-6">
@@ -67,11 +81,12 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardDescription>Bankroll (demo)</CardDescription>
-            <CardTitle>{formatCurrency(1000)}</CardTitle>
+            <CardDescription>Bankroll</CardDescription>
+            <CardTitle>{formatCurrency(bankrollAmount)}</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted-foreground)]">
-            Max stake 2% · Monthly budget {formatCurrency(200)}
+            Max stake {formatPercent(maxStake)}
+            {monthlyBudget ? ` · Budget ${formatCurrency(monthlyBudget)}` : ""}
           </CardContent>
         </Card>
         <Card>
@@ -136,10 +151,7 @@ export default async function DashboardPage() {
               <p className="text-sm text-[var(--muted-foreground)]">No positive EV in mock set.</p>
             ) : (
               evs.map((op) => (
-                <div
-                  key={op.id}
-                  className="rounded-lg border border-[var(--border)] px-3 py-3 text-sm"
-                >
+                <div key={op.id} className="rounded-lg border border-[var(--border)] px-3 py-3 text-sm">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium">{op.selection}</p>
                     <p className="font-mono text-[var(--primary)]">
@@ -153,10 +165,6 @@ export default async function DashboardPage() {
                 </div>
               ))
             )}
-            <p className="text-xs text-[var(--muted-foreground)]">
-              Why estimates may be wrong: injuries, stale lines, small samples, market information
-              not in the model.
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -167,13 +175,26 @@ export default async function DashboardPage() {
             <CardTitle>Recent tracked bets</CardTitle>
             <CardDescription>Manual logging only in beta</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-[var(--muted-foreground)]">
-              No bets logged yet.{" "}
-              <Link href="/app/bets" className="underline">
-                Log a bet
-              </Link>
-            </p>
+          <CardContent className="space-y-2">
+            {bets.length === 0 ? (
+              <p className="text-sm text-[var(--muted-foreground)]">
+                No bets logged yet.{" "}
+                <Link href="/app/bets" className="underline">
+                  Log a bet
+                </Link>
+              </p>
+            ) : (
+              bets.map((bet) => (
+                <div key={bet.id} className="flex justify-between gap-2 text-sm">
+                  <span>
+                    {bet.selection} · {bet.event_label}
+                  </span>
+                  <span className="text-[var(--muted-foreground)]">
+                    {bet.status} · {formatCurrency(Number(bet.stake))}
+                  </span>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
         <Card>

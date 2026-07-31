@@ -1,19 +1,20 @@
 import { PLANS } from "@/config/pricing";
 import { FEATURE_FLAGS } from "@/config/site";
+import { getSessionUser } from "@/lib/auth/session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
-export default function AdminPage() {
-  // Role checks are enforced via Supabase app_metadata.role = admin in production.
-  // Demo admin surfaces metrics placeholders for beta operators.
+export default async function AdminPage() {
+  const user = await getSessionUser();
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-10">
       <div>
         <h1 className="font-[family-name:var(--font-brand)] text-3xl font-semibold">Admin</h1>
         <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-          Restricted metrics overview. Promote admins via Supabase{" "}
-          <code className="text-xs">app_metadata.role = admin</code> — never user_metadata.
+          Signed in as {user?.email ?? "unknown"}. Access requires{" "}
+          <code className="text-xs">app_metadata.role = admin</code> or{" "}
+          <code className="text-xs">ADMIN_EMAILS</code>.
         </p>
       </div>
 
@@ -63,8 +64,8 @@ export default function AdminPage() {
             <CardTitle>Usage & freshness</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted-foreground)]">
-            AI usage, sports-data API usage, alert volume, affiliate clicks, and data freshness
-            populate here once Supabase + providers are connected.
+            Connect Supabase to populate AI usage, sports-data costs, alert volume, and affiliate
+            clicks. Follow YOUR_NEXT_STEPS.md in the repo.
           </CardContent>
         </Card>
         <Card>
@@ -72,8 +73,7 @@ export default function AdminPage() {
             <CardTitle>Support & audit</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted-foreground)]">
-            Support inquiries, suspensions, and audit logs are available via RLS-protected admin
-            policies after migration.
+            Support inquiries, suspensions, and audit logs use RLS admin policies after migration.
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  createTrackedBet,
+  listTrackedBets,
+  updateTrackedBetStatus,
+} from "@/app/actions/bets";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -16,13 +21,59 @@ interface BetRow {
   sportsbook: string;
   americanOdds: number;
   stake: number;
-  status: "open" | "won" | "lost" | "push";
+  status: "open" | "won" | "lost" | "push" | "void";
   notes: string;
+  persisted: boolean;
+}
+
+const DEMO_KEY = "ep_demo_bets";
+
+function loadDemoBets(): BetRow[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(DEMO_KEY) ?? "[]") as BetRow[];
+  } catch {
+    return [];
+  }
+}
+
+function saveDemoBets(bets: BetRow[]) {
+  localStorage.setItem(DEMO_KEY, JSON.stringify(bets));
 }
 
 export default function BetsPage() {
   const [bets, setBets] = useState<BetRow[]>([]);
+  const [mode, setMode] = useState<"demo" | "live">("demo");
   const [formError, setFormError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      const result = await listTrackedBets();
+      if (result.ok && result.mode === "live") {
+        setMode("live");
+        setBets(
+          result.bets.map((b) => ({
+            id: b.id,
+            sport: b.sport,
+            event: b.event_label,
+            market: b.market,
+            selection: b.selection,
+            sportsbook: b.sportsbook,
+            americanOdds: b.american_odds,
+            stake: Number(b.stake),
+            status: b.status as BetRow["status"],
+            notes: b.notes ?? "",
+            persisted: true,
+          })),
+        );
+      } else {
+        setMode("demo");
+        setBets(loadDemoBets());
+      }
+      setLoading(false);
+    })();
+  }, []);
 
   const analytics = useMemo(() => {
     const settled = bets.filter((b) => b.status !== "open");
@@ -37,7 +88,7 @@ export default function BetsPage() {
     return { totalStaked, pnl, winRate, settled: settled.length };
   }, [bets]);
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setFormError(null);
     const fd = new FormData(e.currentTarget);
@@ -51,20 +102,79 @@ export default function BetsPage() {
       setFormError("Stake must be positive.");
       return;
     }
-    const row: BetRow = {
-      id: crypto.randomUUID(),
+
+    const payload = {
       sport: String(fd.get("sport")),
-      event: String(fd.get("event")),
+      eventLabel: String(fd.get("event")),
       market: String(fd.get("market")),
       selection: String(fd.get("selection")),
       sportsbook: String(fd.get("sportsbook")),
       americanOdds,
       stake,
-      status: "open",
-      notes: String(fd.get("notes") ?? ""),
+      notes: String(fd.get("notes") ?? "") || null,
     };
-    setBets((prev) => [row, ...prev]);
+
+    const result = await createTrackedBet(payload);
+    if (!result.ok) {
+      setFormError(result.error);
+      return;
+    }
+
+    if (result.mode === "live" && result.bet) {
+      const b = result.bet;
+      setMode("live");
+      setBets((prev) => [
+        {
+          id: b.id,
+          sport: b.sport,
+          event: b.event_label,
+          market: b.market,
+          selection: b.selection,
+          sportsbook: b.sportsbook,
+          americanOdds: b.american_odds,
+          stake: Number(b.stake),
+          status: "open",
+          notes: b.notes ?? "",
+          persisted: true,
+        },
+        ...prev,
+      ]);
+    } else {
+      const row: BetRow = {
+        id: crypto.randomUUID(),
+        sport: payload.sport,
+        event: payload.eventLabel,
+        market: payload.market,
+        selection: payload.selection,
+        sportsbook: payload.sportsbook,
+        americanOdds,
+        stake,
+        status: "open",
+        notes: payload.notes ?? "",
+        persisted: false,
+      };
+      setBets((prev) => {
+        const next = [row, ...prev];
+        saveDemoBets(next);
+        return next;
+      });
+    }
     e.currentTarget.reset();
+  }
+
+  async function onStatusChange(bet: BetRow, status: BetRow["status"]) {
+    if (bet.persisted && mode === "live") {
+      const result = await updateTrackedBetStatus(bet.id, status);
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
+      }
+    }
+    setBets((prev) => {
+      const next = prev.map((b) => (b.id === bet.id ? { ...b, status } : b));
+      if (mode === "demo") saveDemoBets(next);
+      return next;
+    });
   }
 
   return (
@@ -72,7 +182,8 @@ export default function BetsPage() {
       <div>
         <h1 className="font-[family-name:var(--font-brand)] text-3xl font-semibold">Bet tracker</h1>
         <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-          Manual logging only. Short-term win rate can be misleading.
+          Manual logging only. Short-term win rate can be misleading.{" "}
+          {mode === "live" ? "Saving to your account." : "Demo mode — stored in this browser until Supabase is connected."}
         </p>
       </div>
 
@@ -93,9 +204,7 @@ export default function BetsPage() {
           <CardHeader className="pb-2">
             <CardDescription>ROI (settled)</CardDescription>
             <CardTitle className="text-xl">
-              {analytics.totalStaked
-                ? formatPercent(analytics.pnl / analytics.totalStaked)
-                : "—"}
+              {analytics.totalStaked ? formatPercent(analytics.pnl / analytics.totalStaked) : "—"}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -147,8 +256,10 @@ export default function BetsPage() {
               <Label htmlFor="notes">Notes</Label>
               <Input id="notes" name="notes" />
             </div>
-            {formError ? <p className="text-sm text-[var(--destructive)] sm:col-span-2">{formError}</p> : null}
-            <Button type="submit" className="sm:col-span-2 sm:w-fit">
+            {formError ? (
+              <p className="text-sm text-[var(--destructive)] sm:col-span-2">{formError}</p>
+            ) : null}
+            <Button type="submit" className="sm:col-span-2 sm:w-fit" disabled={loading}>
               Save bet
             </Button>
           </form>
@@ -160,7 +271,9 @@ export default function BetsPage() {
           <CardTitle>Open & recent</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {bets.length === 0 ? (
+          {loading ? (
+            <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>
+          ) : bets.length === 0 ? (
             <p className="text-sm text-[var(--muted-foreground)]">No bets logged yet.</p>
           ) : (
             bets.map((bet) => (
@@ -186,16 +299,14 @@ export default function BetsPage() {
                     className="h-8 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs"
                     value={bet.status}
                     onChange={(e) => {
-                      const status = e.target.value as BetRow["status"];
-                      setBets((prev) =>
-                        prev.map((b) => (b.id === bet.id ? { ...b, status } : b)),
-                      );
+                      void onStatusChange(bet, e.target.value as BetRow["status"]);
                     }}
                   >
                     <option value="open">Open</option>
                     <option value="won">Won</option>
                     <option value="lost">Lost</option>
                     <option value="push">Push</option>
+                    <option value="void">Void</option>
                   </select>
                 </div>
               </div>
