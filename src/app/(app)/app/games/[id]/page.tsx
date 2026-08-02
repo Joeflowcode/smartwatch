@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GameNotes } from "@/components/app/game-notes";
 import { GameWatchActions } from "@/components/app/game-watch-actions";
+import { AffiliateDisclosureNote } from "@/components/legal/affiliate-note";
 import { Badge } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -154,6 +156,9 @@ export default async function GamePage({
           </CardContent>
         </Card>
       </div>
+
+      <GameNotes eventId={event.id} />
+      <AffiliateDisclosureNote />
     </div>
   );
 }

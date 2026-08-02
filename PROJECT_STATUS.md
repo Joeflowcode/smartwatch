@@ -32,11 +32,16 @@
 - [x] CLV math + CSV bet export
 - [x] Odds mobile stacked quotes + empty states
 - [x] Settings preferences + `/api/health`
+- [x] Local alerts UI (thresholds; no spammy loss-chasing)
+- [x] SEO: sitemap, robots, manifest, Open Graph metadata
+- [x] Affiliate disclosure labels near odds/game pages
+- [x] AI route rate limiting + richer mock slate fixtures
+- [x] Game notes (local) + focus-visible a11y polish
 - [ ] Live The Odds API HTTP implementation with retry/timeout
 - [ ] OpenAI tool-calling assistant wired to providers
 - [ ] Admin live MRR queries
 - [ ] Email alerts via Resend
-- [ ] Affiliate click UI with disclosure
+- [ ] Live affiliate click tracking
 - [ ] Feedback screenshot upload
 
 See [YOUR_NEXT_STEPS.md](./YOUR_NEXT_STEPS.md) for the human dashboard checklist.

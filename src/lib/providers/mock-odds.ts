@@ -16,6 +16,9 @@ const tomorrow = new Date(NOW);
 tomorrow.setDate(tomorrow.getDate() + 1);
 tomorrow.setHours(20, 0, 0, 0);
 
+const laterTonight = new Date(NOW);
+laterTonight.setHours(22, 0, 0, 0);
+
 const EVENTS: SportsEvent[] = [
   {
     id: "evt-nba-1",
@@ -27,6 +30,18 @@ const EVENTS: SportsEvent[] = [
     awayTeamName: "New York Knicks",
     startsAt: tonight.toISOString(),
     venue: "TD Garden",
+    status: "scheduled",
+  },
+  {
+    id: "evt-nba-2",
+    sportId: "nba",
+    leagueId: "nba",
+    homeTeamId: "den",
+    awayTeamId: "phx",
+    homeTeamName: "Denver Nuggets",
+    awayTeamName: "Phoenix Suns",
+    startsAt: laterTonight.toISOString(),
+    venue: "Ball Arena",
     status: "scheduled",
   },
   {
@@ -51,6 +66,18 @@ const EVENTS: SportsEvent[] = [
     awayTeamName: "San Diego Padres",
     startsAt: tonight.toISOString(),
     venue: "Dodger Stadium",
+    status: "scheduled",
+  },
+  {
+    id: "evt-mlb-2",
+    sportId: "mlb",
+    leagueId: "mlb",
+    homeTeamId: "nyy",
+    awayTeamId: "bosmlb",
+    homeTeamName: "New York Yankees",
+    awayTeamName: "Boston Red Sox",
+    startsAt: laterTonight.toISOString(),
+    venue: "Yankee Stadium",
     status: "scheduled",
   },
   {
@@ -112,70 +139,96 @@ const ODDS: OddsQuote[] = [
   quote("o16", "evt-mlb-1", "moneyline", "San Diego Padres", "DraftKings", +135),
   quote("o17", "evt-nhl-1", "moneyline", "Edmonton Oilers", "BetMGM", -130),
   quote("o18", "evt-nhl-1", "moneyline", "Colorado Avalanche", "BetMGM", +110),
+  quote("o19", "evt-nba-2", "moneyline", "Denver Nuggets", "DraftKings", -125, null, 8),
+  quote("o20", "evt-nba-2", "moneyline", "Phoenix Suns", "DraftKings", +105, null, 8),
+  quote("o21", "evt-nba-2", "moneyline", "Denver Nuggets", "FanDuel", -118, null, 12),
+  quote("o22", "evt-nba-2", "moneyline", "Phoenix Suns", "FanDuel", -102, null, 12),
+  quote("o23", "evt-nba-2", "spread", "Denver Nuggets", "BetMGM", -110, -2.5, 15),
+  quote("o24", "evt-nba-2", "spread", "Phoenix Suns", "BetMGM", -110, 2.5, 15),
+  quote("o25", "evt-mlb-2", "moneyline", "New York Yankees", "FanDuel", -140, null, 20),
+  quote("o26", "evt-mlb-2", "moneyline", "Boston Red Sox", "FanDuel", +120, null, 20),
+  quote("o27", "evt-mlb-2", "moneyline", "New York Yankees", "DraftKings", -148, null, 25),
+  quote("o28", "evt-mlb-2", "moneyline", "Boston Red Sox", "DraftKings", +128, null, 25),
+  quote("o29", "evt-nfl-1", "spread", "Kansas City Chiefs", "BetMGM", -108, -1.5, 30),
+  quote("o30", "evt-nfl-1", "spread", "Buffalo Bills", "BetMGM", -112, 1.5, 30),
+  quote("o31", "evt-nhl-1", "total", "Over", "DraftKings", -115, 6.5, 18),
+  quote("o32", "evt-nhl-1", "total", "Under", "DraftKings", -105, 6.5, 18),
 ];
 
 function buildEv(): EvOpportunity[] {
-  const event = EVENTS[0];
-  const homeOdds = ODDS.filter(
-    (o) => o.eventId === event.id && o.market === "moneyline" && o.selection === event.homeTeamName,
-  );
-  const awayOdds = ODDS.filter(
-    (o) => o.eventId === event.id && o.market === "moneyline" && o.selection === event.awayTeamName,
-  );
-  const bestHome = homeOdds.reduce((a, b) => (a.decimalOdds > b.decimalOdds ? a : b));
-  const bestAway = awayOdds.reduce((a, b) => (a.decimalOdds > b.decimalOdds ? a : b));
-  const [noVigHome, noVigAway] = noVigProbabilities([bestHome.decimalOdds, bestAway.decimalOdds]);
+  const opportunities: EvOpportunity[] = [];
 
-  // Model leans slightly toward home relative to no-vig — illustrative mock only.
-  const modelHome = Math.min(0.72, noVigHome + 0.03);
-  const modelAway = 1 - modelHome;
+  for (const event of EVENTS) {
+    const homeOdds = ODDS.filter(
+      (o) =>
+        o.eventId === event.id && o.market === "moneyline" && o.selection === event.homeTeamName,
+    );
+    const awayOdds = ODDS.filter(
+      (o) =>
+        o.eventId === event.id && o.market === "moneyline" && o.selection === event.awayTeamName,
+    );
+    if (homeOdds.length === 0 || awayOdds.length === 0) continue;
 
-  const make = (
-    selection: string,
-    quoteRow: OddsQuote,
-    modelP: number,
-    noVigP: number,
-  ): EvOpportunity => {
-    const marketP = quoteRow.impliedProbability;
-    return {
-      id: `ev-${quoteRow.id}`,
-      eventId: event.id,
-      eventLabel: `${event.awayTeamName} @ ${event.homeTeamName}`,
-      market: "moneyline",
-      selection,
-      sportsbook: quoteRow.sportsbook,
-      americanOdds: quoteRow.americanOdds,
-      decimalOdds: quoteRow.decimalOdds,
-      modelProbability: Number(modelP.toFixed(4)),
-      marketProbability: marketP,
-      noVigProbability: Number(noVigP.toFixed(4)),
-      edge: Number(edge(modelP, marketP).toFixed(4)),
-      expectedValue: Number(expectedValue(modelP, quoteRow.decimalOdds).toFixed(4)),
-      dataQuality: "medium",
-      sampleSize: 42,
-      keyFactors: [
-        "Rest advantage (mock)",
-        "Home court historical edge (small sample caution)",
-        "Recent form vs opposing pace (mock)",
-      ],
-      riskWarnings: [
-        "Model probability is an estimate, not a certainty.",
-        "Mock data — not for real wagering decisions.",
-        "Injury news can invalidate pregame estimates quickly.",
-      ],
-      whyMayBeWrong: [
-        "Small recent sample may overstate form.",
-        "Market may price information unavailable to the model.",
-        "Closing line may move against this quote.",
-      ],
-      updatedAt: quoteRow.updatedAt,
+    const bestHome = homeOdds.reduce((a, b) => (a.decimalOdds > b.decimalOdds ? a : b));
+    const bestAway = awayOdds.reduce((a, b) => (a.decimalOdds > b.decimalOdds ? a : b));
+    const [noVigHome, noVigAway] = noVigProbabilities([
+      bestHome.decimalOdds,
+      bestAway.decimalOdds,
+    ]);
+
+    // Small illustrative lean — mock only.
+    const modelHome = Math.min(0.72, noVigHome + 0.025);
+    const modelAway = 1 - modelHome;
+
+    const make = (
+      selection: string,
+      quoteRow: OddsQuote,
+      modelP: number,
+      noVigP: number,
+    ): EvOpportunity => {
+      const marketP = quoteRow.impliedProbability;
+      return {
+        id: `ev-${quoteRow.id}`,
+        eventId: event.id,
+        eventLabel: `${event.awayTeamName} @ ${event.homeTeamName}`,
+        market: "moneyline",
+        selection,
+        sportsbook: quoteRow.sportsbook,
+        americanOdds: quoteRow.americanOdds,
+        decimalOdds: quoteRow.decimalOdds,
+        modelProbability: Number(modelP.toFixed(4)),
+        marketProbability: marketP,
+        noVigProbability: Number(noVigP.toFixed(4)),
+        edge: Number(edge(modelP, marketP).toFixed(4)),
+        expectedValue: Number(expectedValue(modelP, quoteRow.decimalOdds).toFixed(4)),
+        dataQuality: "medium",
+        sampleSize: 42,
+        keyFactors: [
+          "Rest advantage (mock)",
+          "Home court historical edge (small sample caution)",
+          "Recent form vs opposing pace (mock)",
+        ],
+        riskWarnings: [
+          "Model probability is an estimate, not a certainty.",
+          "Mock data — not for real wagering decisions.",
+          "Injury news can invalidate pregame estimates quickly.",
+        ],
+        whyMayBeWrong: [
+          "Small recent sample may overstate form.",
+          "Market may price information unavailable to the model.",
+          "Closing line may move against this quote.",
+        ],
+        updatedAt: quoteRow.updatedAt,
+      };
     };
-  };
 
-  return [
-    make(event.homeTeamName, bestHome, modelHome, noVigHome),
-    make(event.awayTeamName, bestAway, modelAway, noVigAway),
-  ].filter((o) => o.expectedValue > 0);
+    opportunities.push(
+      make(event.homeTeamName, bestHome, modelHome, noVigHome),
+      make(event.awayTeamName, bestAway, modelAway, noVigAway),
+    );
+  }
+
+  return opportunities.filter((o) => o.expectedValue > 0);
 }
 
 export class MockOddsProvider implements OddsProvider {

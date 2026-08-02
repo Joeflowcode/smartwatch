@@ -111,6 +111,9 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
+            <Link href="/app/alerts">Alerts</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
             <Link href="/app/arbitrage">Arbitrage finder</Link>
           </Button>
           <Button asChild variant="outline" size="sm">

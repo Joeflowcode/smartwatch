@@ -3,6 +3,7 @@ import { z } from "zod";
 import { checkAiQuota } from "@/app/actions/entitlements";
 import { getSessionUser } from "@/lib/auth/session";
 import { createAIProvider } from "@/lib/providers";
+import { rateLimit } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const BodySchema = z.object({
@@ -19,6 +20,21 @@ export async function POST(request: Request) {
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const limited = rateLimit({
+      key: `ai:${user.id}`,
+      limit: 30,
+      windowMs: 60_000,
+    });
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: "Too many AI requests. Please wait a moment." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil(limited.retryAfterMs / 1000)) },
+        },
+      );
     }
 
     const quota = await checkAiQuota();

@@ -69,6 +69,20 @@ body {
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
 }
 
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 .hero-grid {
   background-image:
     radial-gradient(ellipse 80% 60% at 50% -10%, var(--hero-glow), transparent 60%),

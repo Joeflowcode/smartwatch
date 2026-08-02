@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AffiliateDisclosureNote } from "@/components/legal/affiliate-note";
 import { Badge } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/states";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +37,8 @@ export default async function OddsPage({
           ) : null}
         </p>
       </div>
+
+      <AffiliateDisclosureNote compact />
 
       <form className="grid grid-cols-2 gap-3 text-sm sm:flex sm:flex-wrap">
         <select
