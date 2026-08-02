@@ -83,9 +83,9 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ## Optional later (not blocking beta invites)
 
-- The Odds API key (`ODDS_API_KEY`)
-- OpenAI key (`OPENAI_API_KEY`)
-- Resend (`RESEND_API_KEY`)
+- The Odds API: `ODDS_API_KEY` + `ODDS_PROVIDER=the-odds-api` (+ optional `ODDS_API_REGIONS=us`)
+- OpenAI: `OPENAI_API_KEY` + `AI_PROVIDER=openai` (+ optional `OPENAI_MODEL=gpt-4o-mini`)
+- Resend: `RESEND_API_KEY` (+ `EMAIL_FROM`)
 - PostHog / Sentry
 
 ---

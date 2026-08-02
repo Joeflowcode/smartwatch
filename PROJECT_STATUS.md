@@ -43,9 +43,9 @@
 - [x] Scanner / bets / alerts empty states + FAQ accordion + features CTAs
 - [x] Shared contact Zod schema + expanded unit tests (providers, entitlements, odds, AI)
 - [x] Live The Odds API HTTP implementation with retry/timeout
-- [ ] OpenAI tool-calling assistant wired to providers
+- [x] OpenAI chat provider with safety pre-checks (tool-calling can deepen later)
 - [ ] Admin live MRR queries
-- [ ] Email alerts via Resend
+- [x] Resend email provider adapter (alert cron / templates still open)
 - [ ] Live affiliate click tracking
 - [ ] Feedback screenshot upload
 

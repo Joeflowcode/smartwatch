@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LegalBanner } from "@/components/legal/legal-banner";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Responsible use" };
 
@@ -41,6 +43,14 @@ export default function ResponsibleUsePage() {
           </li>
         ))}
       </ul>
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Button asChild>
+          <Link href="/app/bankroll">Set bankroll limits</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/contact">Talk to us</Link>
+        </Button>
+      </div>
       <div className="mt-10">
         <LegalBanner />
       </div>

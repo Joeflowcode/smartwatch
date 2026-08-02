@@ -1,6 +1,8 @@
 import type { OddsProvider } from "@/lib/providers/odds-provider";
 import { MockOddsProvider } from "@/lib/providers/mock-odds";
 import { MockAIProvider } from "@/lib/providers/mock-ai";
+import { OpenAIProvider } from "@/lib/providers/openai-ai";
+import { ResendEmailProvider } from "@/lib/providers/resend-email";
 import {
   MockEmailProvider,
   MockInjuryProvider,
@@ -46,15 +48,14 @@ export function createWeatherProvider(): WeatherProvider {
 
 export function createAIProvider(): AIProvider {
   if (process.env.AI_PROVIDER === "openai" && process.env.OPENAI_API_KEY) {
-    // Lazy live adapter — OpenAI wired in AI module; fallback mock if import fails.
-    return new MockAIProvider();
+    return new OpenAIProvider(process.env.OPENAI_API_KEY);
   }
   return new MockAIProvider();
 }
 
 export function createEmailProvider(): EmailProvider {
   if (process.env.RESEND_API_KEY) {
-    return new MockEmailProvider(); // Resend adapter activated when fully configured
+    return new ResendEmailProvider(process.env.RESEND_API_KEY);
   }
   return new MockEmailProvider();
 }
