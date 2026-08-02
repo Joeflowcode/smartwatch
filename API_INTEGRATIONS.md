@@ -4,7 +4,7 @@
 
 - Interface: `OddsProvider`
 - Mock: `MockOddsProvider` (default)
-- Live stub: `TheOddsApiProvider` when `ODDS_PROVIDER=the-odds-api` and `ODDS_API_KEY` set
+- Live HTTP: `TheOddsApiProvider` when `ODDS_PROVIDER=the-odds-api` and `ODDS_API_KEY` set (retry/timeout; NBA/NFL/MLB/NHL; EV from no-vig consensus prior)
 - Extend `getEvents` / `getOdds` with HTTP + retry/timeout before enabling in production
 
 ## Sports / injuries / stats / weather

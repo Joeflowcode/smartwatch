@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { checkAiQuota } from "@/app/actions/entitlements";
 import { getSessionUser } from "@/lib/auth/session";
 import { createAIProvider } from "@/lib/providers";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
-
-const BodySchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(["user", "assistant", "system"]),
-      content: z.string().min(1).max(8000),
-    }),
-  ),
-});
+import { AiChatBodySchema } from "@/lib/validation/ai-chat";
 
 export async function POST(request: Request) {
   try {
@@ -43,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     const json = await request.json();
-    const parsed = BodySchema.safeParse(json);
+    const parsed = AiChatBodySchema.safeParse(json);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
@@ -51,8 +42,8 @@ export async function POST(request: Request) {
     const provider = createAIProvider();
     const result = await provider.chat({ messages: parsed.data.messages });
 
-    // Persist usage for live users when history consent is later enabled; count for quota now.
-    if (!user.isDemo) {
+    // Persist only with explicit consent when Supabase is connected.
+    if (parsed.data.saveHistory && !user.isDemo) {
       const supabase = await createClient();
       if (supabase) {
         const { data: conversation } = await supabase

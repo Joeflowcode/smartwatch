@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/input";
 import { SUGGESTED_PROMPTS } from "@/lib/ai/safety";
+import { readUserPrefs } from "@/lib/prefs";
 
 interface Message {
   role: "user" | "assistant";
@@ -14,29 +15,50 @@ interface Message {
   at?: string;
 }
 
+const WELCOME: Message = {
+  role: "assistant",
+  content:
+    "Ask about tonight’s slate, line moves, EV math, or bankroll sizing. I ground answers in available app data and will say when information is missing. I will not promise winners or help with illegal activity.",
+};
+
 export default function AIPage() {
   const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Ask about tonight’s slate, line moves, EV math, or bankroll sizing. I ground answers in available app data and will say when information is missing. I will not promise winners or help with illegal activity.",
-      at: new Date().toISOString(),
-    },
+    { ...WELCOME, at: new Date().toISOString() },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [saveHistory, setSaveHistory] = useState(false);
+  const [saveHistory, setSaveHistory] = useState(() =>
+    typeof window === "undefined" ? false : readUserPrefs().aiHistoryDefault,
+  );
   const [quota, setQuota] = useState<{ remaining?: number; limit?: number }>({});
   const [error, setError] = useState<string | null>(null);
+  const [started, setStarted] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag = (e.target as HTMLElement | null)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) {
+          return;
+        }
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   async function send(text: string) {
     if (!text.trim() || loading) return;
     setError(null);
+    setStarted(true);
     const userMsg: Message = {
       role: "user",
       content: text.trim(),
@@ -94,7 +116,8 @@ export default function AIPage() {
           AI research assistant
         </h1>
         <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-          Factual data vs interpretation are labeled.{" "}
+          Factual data vs interpretation are labeled. Press{" "}
+          <kbd className="rounded border border-[var(--border)] px-1 text-xs">/</kbd> to focus.{" "}
           <Link href="/responsible-use" className="underline">
             Responsible use
           </Link>
@@ -106,19 +129,42 @@ export default function AIPage() {
         </p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {SUGGESTED_PROMPTS.slice(0, 4).map((prompt) => (
-          <button
-            key={prompt}
-            type="button"
-            disabled={loading}
-            onClick={() => void send(prompt)}
-            className="shrink-0 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-left text-xs text-[var(--muted-foreground)] hover:border-[var(--primary)] hover:text-[var(--foreground)]"
-          >
-            {prompt.length > 48 ? `${prompt.slice(0, 48)}…` : prompt}
-          </button>
-        ))}
-      </div>
+      {!started ? (
+        <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--muted)]/20 px-4 py-5">
+          <p className="text-sm font-medium">Try a grounded research prompt</p>
+          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+            Answers cite mock or live provider data. Guarantees and match-fixing asks are refused.
+          </p>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {SUGGESTED_PROMPTS.slice(0, 4).map((prompt) => (
+              <li key={prompt}>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => void send(prompt)}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-left text-xs leading-snug text-[var(--muted-foreground)] transition hover:border-[var(--primary)] hover:text-[var(--foreground)]"
+                >
+                  {prompt}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {SUGGESTED_PROMPTS.slice(0, 3).map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              disabled={loading}
+              onClick={() => void send(prompt)}
+              className="shrink-0 rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-left text-xs text-[var(--muted-foreground)] hover:border-[var(--primary)] hover:text-[var(--foreground)]"
+            >
+              {prompt.length > 42 ? `${prompt.slice(0, 42)}…` : prompt}
+            </button>
+          ))}
+        </div>
+      )}
 
       <Card>
         <CardHeader className="pb-3">
@@ -130,12 +176,17 @@ export default function AIPage() {
                 checked={saveHistory}
                 onChange={(e) => setSaveHistory(e.target.checked)}
               />
-              Save history (consent required — off by default)
+              Save history (consent required — persists only when Supabase is connected)
             </label>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="max-h-[50vh] space-y-3 overflow-y-auto rounded-lg border border-[var(--border)] p-3 sm:max-h-[480px] sm:p-4">
+          <div
+            className="max-h-[50vh] space-y-3 overflow-y-auto rounded-lg border border-[var(--border)] p-3 sm:max-h-[480px] sm:p-4"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+          >
             {messages.map((m, idx) => (
               <div
                 key={`${m.role}-${idx}`}
@@ -161,7 +212,11 @@ export default function AIPage() {
             ) : null}
             <div ref={bottomRef} />
           </div>
-          {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
+          {error ? (
+            <p className="text-sm text-[var(--destructive)]" role="alert">
+              {error}
+            </p>
+          ) : null}
           <form
             className="space-y-3"
             onSubmit={(e) => {
@@ -170,6 +225,7 @@ export default function AIPage() {
             }}
           >
             <Textarea
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a research question…"
@@ -184,16 +240,11 @@ export default function AIPage() {
                 type="button"
                 variant="outline"
                 disabled={loading || messages.length <= 1}
-                onClick={() =>
-                  setMessages([
-                    {
-                      role: "assistant",
-                      content:
-                        "Conversation cleared. Ask about tonight’s slate, probabilities, or bankroll sizing.",
-                      at: new Date().toISOString(),
-                    },
-                  ])
-                }
+                onClick={() => {
+                  setStarted(false);
+                  setMessages([{ ...WELCOME, at: new Date().toISOString() }]);
+                  setError(null);
+                }}
               >
                 Clear
               </Button>

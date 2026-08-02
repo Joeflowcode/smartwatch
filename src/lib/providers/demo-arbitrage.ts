@@ -12,6 +12,7 @@ export interface DemoArbCard {
     outcome: string;
     sportsbook: string;
     americanOdds: number;
+    decimalOdds: number;
     stakePercent: number;
   }>;
   warnings: string[];
@@ -54,6 +55,7 @@ export function findDemoArbitrage(): DemoArbCard[] {
         outcome: a.outcome,
         sportsbook: a.sportsbook,
         americanOdds: decimalToAmerican(a.decimalOdds),
+        decimalOdds: a.decimalOdds,
         stakePercent: a.stakePercent,
       })),
       warnings: [

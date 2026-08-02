@@ -8,6 +8,7 @@ import {
   MockStatsProvider,
   MockWeatherProvider,
 } from "@/lib/providers/mock-sports";
+import { TheOddsApiProvider } from "@/lib/providers/the-odds-api";
 import type {
   AIProvider,
   EmailProvider,
@@ -16,37 +17,8 @@ import type {
   StatsProvider,
   WeatherProvider,
 } from "@/lib/providers/types";
-import { createMeta } from "@/lib/providers/types";
 
-/**
- * The Odds API adapter placeholder.
- * Uses live HTTP when ODDS_API_KEY is set; otherwise callers should use mock via factory.
- */
-export class TheOddsApiProvider implements OddsProvider {
-  readonly name = "the-odds-api";
-
-  constructor(private apiKey: string) {}
-
-  async getEvents() {
-    // Live integration wired in a follow-up; fail soft with clear metadata.
-    void this.apiKey;
-    return {
-      data: [],
-      meta: {
-        ...createMeta(this.name, false),
-        isStale: true,
-      },
-    };
-  }
-
-  async getOdds() {
-    return { data: [], meta: createMeta(this.name, false) };
-  }
-
-  async getEvOpportunities() {
-    return { data: [], meta: createMeta(this.name, false) };
-  }
-}
+export { TheOddsApiProvider };
 
 export function createOddsProvider(): OddsProvider {
   const mode = process.env.ODDS_PROVIDER ?? "mock";

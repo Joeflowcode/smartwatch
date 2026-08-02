@@ -1,13 +1,14 @@
 import Link from "next/link";
+import { FormattedOdds } from "@/components/app/formatted-odds";
 import { isFeatureEnabled } from "@/config/features";
 import { PLANS } from "@/config/pricing";
 import { getUserSubscription } from "@/lib/auth/subscription";
-import { formatAmerican } from "@/lib/betting/odds";
 import { findDemoArbitrage } from "@/lib/providers/demo-arbitrage";
 import { formatPercent } from "@/lib/utils";
 import { Badge } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/states";
 
 export default async function ArbitragePage() {
   const enabled = isFeatureEnabled("arbitrageAlerts");
@@ -58,11 +59,15 @@ export default async function ArbitragePage() {
       </div>
 
       {opportunities.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-sm text-[var(--muted-foreground)]">
-            No mathematical arbitrage in the current mock sample. Check back as lines update.
-          </CardContent>
-        </Card>
+        <EmptyState
+          title="No mathematical arbitrage in this sample"
+          description="Cross-book prices currently sum above 100% implied. Check Odds as lines update — arbs are rare and often unexecutable."
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link href="/app/odds">Compare odds</Link>
+            </Button>
+          }
+        />
       ) : (
         opportunities.map((op) => (
           <Card key={op.eventId}>
@@ -82,9 +87,9 @@ export default async function ArbitragePage() {
                   <span>
                     {leg.outcome} · {leg.sportsbook}
                   </span>
-                  <span className="font-mono">
-                    {formatAmerican(leg.americanOdds)} · stake{" "}
-                    {formatPercent(leg.stakePercent)}
+                  <span className="inline-flex items-center gap-2 font-mono">
+                    <FormattedOdds american={leg.americanOdds} decimal={leg.decimalOdds} />
+                    <span>· stake {formatPercent(leg.stakePercent)}</span>
                   </span>
                 </div>
               ))}

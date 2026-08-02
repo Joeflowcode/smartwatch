@@ -17,6 +17,18 @@ describe("closing line value", () => {
     expect(clv).toBeGreaterThan(0);
   });
 
+  it("is negative when bet price is worse than close", () => {
+    const clv = closingLineValueProbability(
+      americanToDecimal(-120),
+      americanToDecimal(-110),
+    );
+    expect(clv).toBeLessThan(0);
+  });
+
+  it("rejects invalid decimal odds", () => {
+    expect(() => closingLineValueProbability(1, 2)).toThrow(/greater than 1/i);
+  });
+
   it("reports american point difference", () => {
     expect(closingLineValueAmericanPoints(-110, -120)).toBe(10);
   });
@@ -40,6 +52,25 @@ describe("csv export", () => {
     expect(csv.startsWith("sport,event,")).toBe(true);
     expect(csv).toContain('"Away @ Home, tip"');
     expect(csv).toContain('""value""');
+  });
+
+  it("includes CLV when closing line is present", () => {
+    const csv = betsToCsv([
+      {
+        sport: "NBA",
+        event: "A @ B",
+        market: "moneyline",
+        selection: "B",
+        sportsbook: "FanDuel",
+        americanOdds: 150,
+        stake: 10,
+        status: "open",
+        closingLineAmerican: 120,
+      },
+    ]);
+    expect(csv).toContain("120");
+    const clvCell = csv.trim().split("\n")[1]?.split(",").at(-1);
+    expect(Number(clvCell)).toBeGreaterThan(0);
   });
 });
 

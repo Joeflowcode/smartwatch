@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/states";
 
 const KEY = "ep_watchlist";
 
@@ -78,9 +80,15 @@ export function WatchlistPanel() {
   const { items, toggle } = useWatchlist();
   if (items.length === 0) {
     return (
-      <p className="text-sm text-[var(--muted-foreground)]">
-        No watchlist items yet. Use Watch on a game page.
-      </p>
+      <EmptyState
+        title="Watchlist is empty"
+        description="Open a game and tap Watch to pin it here for quick research."
+        action={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/odds">Browse games</Link>
+          </Button>
+        }
+      />
     );
   }
   return (

@@ -42,7 +42,7 @@
 - [x] Odds format preference wired into Odds / Scanner / Games / Dashboard
 - [x] Scanner / bets / alerts empty states + FAQ accordion + features CTAs
 - [x] Shared contact Zod schema + expanded unit tests (providers, entitlements, odds, AI)
-- [ ] Live The Odds API HTTP implementation with retry/timeout
+- [x] Live The Odds API HTTP implementation with retry/timeout
 - [ ] OpenAI tool-calling assistant wired to providers
 - [ ] Admin live MRR queries
 - [ ] Email alerts via Resend
