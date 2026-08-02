@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const MORE_PREFIXES = ["/app/settings", "/app/alerts", "/app/arbitrage"];
+
 const ITEMS = [
   { href: "/app", label: "Home", icon: LayoutDashboard },
   { href: "/app/odds", label: "Odds", icon: LineChart },
@@ -36,12 +38,15 @@ export function MobileBottomNav() {
           const active =
             item.href === "/app"
               ? pathname === "/app"
-              : pathname.startsWith(item.href);
+              : item.href === "/app/settings"
+                ? MORE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
           return (
             <li key={item.href} className="flex-1">
               <Link
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex flex-col items-center gap-0.5 px-1 py-2 text-[10px]",
                   active ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]",

@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { assertScannerAccess } from "@/app/actions/entitlements";
+import { FormattedOdds } from "@/components/app/formatted-odds";
 import { Badge } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/states";
 import { PLANS } from "@/config/pricing";
 import { getUserSubscription } from "@/lib/auth/subscription";
-import { formatAmerican } from "@/lib/betting/odds";
 import { createOddsProvider } from "@/lib/providers";
 import { formatPercent } from "@/lib/utils";
 
@@ -53,6 +54,17 @@ export default async function ScannerPage() {
       </div>
 
       <div className="space-y-4">
+        {visible.length === 0 ? (
+          <EmptyState
+            title="No positive-EV candidates right now"
+            description="Markets look fairly priced in the current sample, or filters removed every line. Compare books on Odds and check back after the next refresh."
+            action={
+              <Button asChild variant="outline">
+                <Link href="/app/odds">Browse odds</Link>
+              </Button>
+            }
+          />
+        ) : null}
         {visible.map((op) => (
           <Card key={op.id}>
             <CardHeader>
@@ -61,7 +73,7 @@ export default async function ScannerPage() {
                   <CardTitle className="text-lg">{op.selection}</CardTitle>
                   <CardDescription>
                     {op.eventLabel} · {op.market} · {op.sportsbook}{" "}
-                    {formatAmerican(op.americanOdds)}
+                    <FormattedOdds american={op.americanOdds} decimal={op.decimalOdds} />
                   </CardDescription>
                 </div>
                 <div className="text-right text-sm">

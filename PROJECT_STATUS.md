@@ -37,6 +37,11 @@
 - [x] Affiliate disclosure labels near odds/game pages
 - [x] AI route rate limiting + richer mock slate fixtures
 - [x] Game notes (local) + focus-visible a11y polish
+- [x] Route loading / error / 404 + global-error boundaries
+- [x] Skip-to-content + active nav `aria-current` (app + marketing)
+- [x] Odds format preference wired into Odds / Scanner / Games / Dashboard
+- [x] Scanner / bets / alerts empty states + FAQ accordion + features CTAs
+- [x] Shared contact Zod schema + expanded unit tests (providers, entitlements, odds, AI)
 - [ ] Live The Odds API HTTP implementation with retry/timeout
 - [ ] OpenAI tool-calling assistant wired to providers
 - [ ] Admin live MRR queries

@@ -83,6 +83,37 @@ export default function PricingPage() {
         })}
       </div>
 
+      <section className="mt-16 max-w-3xl">
+        <h2 className="font-[family-name:var(--font-brand)] text-2xl font-semibold">
+          Pricing questions
+        </h2>
+        <dl className="mt-6 space-y-5 text-sm">
+          {[
+            {
+              q: "Can I cancel anytime?",
+              a: "Yes. Manage billing in the Stripe Customer Portal after you subscribe. Access continues through the paid period.",
+            },
+            {
+              q: "Do you accept wagers?",
+              a: "No. Subscriptions unlock research tools only. We never custody funds or place bets.",
+            },
+            {
+              q: "What happens on Free?",
+              a: "Limited AI questions, delayed EV scanner access, and core odds/game pages so you can evaluate the product honestly.",
+            },
+            {
+              q: "Is the trial a credit card trap?",
+              a: "When Stripe is configured, trials follow Stripe’s settings. We’ll show clear renewal terms at checkout — never fake urgency.",
+            },
+          ].map((item) => (
+            <div key={item.q}>
+              <dt className="font-medium">{item.q}</dt>
+              <dd className="mt-1 text-[var(--muted-foreground)]">{item.a}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
       <div className="mt-12">
         <LegalBanner />
       </div>

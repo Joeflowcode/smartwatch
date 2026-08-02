@@ -1,9 +1,9 @@
 import Link from "next/link";
+import { FormattedOdds } from "@/components/app/formatted-odds";
 import { AffiliateDisclosureNote } from "@/components/legal/affiliate-note";
 import { Badge } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/states";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatAmerican } from "@/lib/betting/odds";
 import { createOddsProvider } from "@/lib/providers";
 import { formatPercent } from "@/lib/utils";
 
@@ -105,69 +105,85 @@ export default async function OddsPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Mobile stacked quotes */}
-                  <div className="space-y-2 md:hidden">
-                    {flat.map(({ q, best }) => (
-                      <div
-                        key={q.id}
-                        className={`rounded-lg border border-[var(--border)] px-3 py-2 text-sm ${
-                          q.decimalOdds === best ? "bg-[var(--primary)]/5" : ""
-                        }`}
-                      >
-                        <div className="flex justify-between gap-2">
-                          <span className="font-medium capitalize">
-                            {q.market} · {q.selection}
-                            {q.line != null ? ` (${q.line})` : ""}
-                          </span>
-                          <span className="font-mono">{formatAmerican(q.americanOdds)}</span>
-                        </div>
-                        <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                          {q.sportsbook} · implied {formatPercent(q.impliedProbability)} ·{" "}
-                          {new Date(q.updatedAt).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Desktop table */}
-                  <div className="hidden overflow-x-auto md:block">
-                    <table className="w-full min-w-[640px] text-left text-sm">
-                      <thead className="text-xs text-[var(--muted-foreground)]">
-                        <tr>
-                          <th className="pb-2 font-medium">Market</th>
-                          <th className="pb-2 font-medium">Selection</th>
-                          <th className="pb-2 font-medium">Book</th>
-                          <th className="pb-2 font-medium">Price</th>
-                          <th className="pb-2 font-medium">Implied</th>
-                          <th className="pb-2 font-medium">Updated</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                  {flat.length === 0 ? (
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      No quotes for this market filter on this game.
+                    </p>
+                  ) : (
+                    <>
+                      {/* Mobile stacked quotes */}
+                      <div className="space-y-2 md:hidden">
                         {flat.map(({ q, best }) => (
-                          <tr
+                          <div
                             key={q.id}
-                            className={
-                              q.decimalOdds === best
-                                ? "bg-[var(--primary)]/5 font-medium"
-                                : undefined
-                            }
+                            className={`rounded-lg border border-[var(--border)] px-3 py-2 text-sm ${
+                              q.decimalOdds === best ? "bg-[var(--primary)]/5" : ""
+                            }`}
                           >
-                            <td className="py-2 capitalize">{q.market}</td>
-                            <td className="py-2">
-                              {q.selection}
-                              {q.line != null ? ` (${q.line})` : ""}
-                            </td>
-                            <td className="py-2">{q.sportsbook}</td>
-                            <td className="py-2 font-mono">{formatAmerican(q.americanOdds)}</td>
-                            <td className="py-2">{formatPercent(q.impliedProbability)}</td>
-                            <td className="py-2 text-xs text-[var(--muted-foreground)]">
+                            <div className="flex justify-between gap-2">
+                              <span className="font-medium capitalize">
+                                {q.market} · {q.selection}
+                                {q.line != null ? ` (${q.line})` : ""}
+                              </span>
+                              <FormattedOdds
+                                american={q.americanOdds}
+                                decimal={q.decimalOdds}
+                              />
+                            </div>
+                            <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                              {q.sportsbook} · implied {formatPercent(q.impliedProbability)} ·{" "}
                               {new Date(q.updatedAt).toLocaleTimeString()}
-                            </td>
-                          </tr>
+                            </p>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </div>
+
+                      {/* Desktop table */}
+                      <div className="hidden overflow-x-auto md:block">
+                        <table className="w-full min-w-[640px] text-left text-sm">
+                          <thead className="text-xs text-[var(--muted-foreground)]">
+                            <tr>
+                              <th className="pb-2 font-medium">Market</th>
+                              <th className="pb-2 font-medium">Selection</th>
+                              <th className="pb-2 font-medium">Book</th>
+                              <th className="pb-2 font-medium">Price</th>
+                              <th className="pb-2 font-medium">Implied</th>
+                              <th className="pb-2 font-medium">Updated</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {flat.map(({ q, best }) => (
+                              <tr
+                                key={q.id}
+                                className={
+                                  q.decimalOdds === best
+                                    ? "bg-[var(--primary)]/5 font-medium"
+                                    : undefined
+                                }
+                              >
+                                <td className="py-2 capitalize">{q.market}</td>
+                                <td className="py-2">
+                                  {q.selection}
+                                  {q.line != null ? ` (${q.line})` : ""}
+                                </td>
+                                <td className="py-2">{q.sportsbook}</td>
+                                <td className="py-2">
+                                  <FormattedOdds
+                                    american={q.americanOdds}
+                                    decimal={q.decimalOdds}
+                                  />
+                                </td>
+                                <td className="py-2">{formatPercent(q.impliedProbability)}</td>
+                                <td className="py-2 text-xs text-[var(--muted-foreground)]">
+                                  {new Date(q.updatedAt).toLocaleTimeString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             );

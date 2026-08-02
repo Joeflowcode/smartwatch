@@ -141,7 +141,12 @@ export default function AlertsPage() {
       {rules.length === 0 ? (
         <EmptyState
           title="No alerts yet"
-          description="Create a threshold for EV, target odds, or line movement."
+          description="Create a threshold for EV, target odds, or line movement using the form above. Start from Odds or the EV scanner when you know what to watch."
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link href="/app/odds">Browse odds</Link>
+            </Button>
+          }
         />
       ) : (
         <div className="space-y-3">

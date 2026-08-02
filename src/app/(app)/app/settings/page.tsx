@@ -87,7 +87,8 @@ export default async function SettingsPage() {
             </form>
           ) : (
             <p className="text-sm text-[var(--muted-foreground)]">
-              Stripe is not configured yet. Add keys from YOUR_NEXT_STEPS.md to enable checkout.
+              Billing portal unlocks once Stripe keys are connected. Until then, explore Free tools
+              and mock data.
             </p>
           )}
         </CardContent>
@@ -107,7 +108,8 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Beta tools</CardTitle>
+          <CardTitle>More tools</CardTitle>
+          <CardDescription>Alerts and Elite arb live here on mobile too</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
@@ -116,9 +118,11 @@ export default async function SettingsPage() {
           <Button asChild variant="outline" size="sm">
             <Link href="/app/arbitrage">Arbitrage finder</Link>
           </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/api/health">System health</Link>
-          </Button>
+          {user?.isDemo ? (
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/api/health">System health</Link>
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
     </div>

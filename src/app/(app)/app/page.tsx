@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PLANS } from "@/config/pricing";
 import { getUserSubscription } from "@/lib/auth/subscription";
-import { formatAmerican } from "@/lib/betting/odds";
+import { FormattedOdds } from "@/components/app/formatted-odds";
 import { createOddsProvider } from "@/lib/providers";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
@@ -55,6 +55,13 @@ export default async function DashboardPage() {
                 Mock data
               </Badge>
             ) : null}
+            {meta.isStale ? (
+              <Badge className="ml-2 border-orange-500/40 text-orange-700 dark:text-orange-300">
+                Stale
+              </Badge>
+            ) : (
+              <Badge className="ml-2">Fresh · {new Date(meta.fetchedAt).toLocaleTimeString()}</Badge>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -133,7 +140,12 @@ export default async function DashboardPage() {
                 </div>
                 {best ? (
                   <div className="text-right text-sm">
-                    <p className="font-mono">{formatAmerican(best.americanOdds)}</p>
+                    <p>
+                      <FormattedOdds
+                        american={best.americanOdds}
+                        decimal={best.decimalOdds}
+                      />
+                    </p>
                     <p className="text-xs text-[var(--muted-foreground)]">{best.sportsbook}</p>
                   </div>
                 ) : null}

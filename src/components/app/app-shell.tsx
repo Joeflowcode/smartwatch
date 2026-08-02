@@ -1,22 +1,12 @@
 import Link from "next/link";
+import { SkipToContent } from "@/components/a11y/skip-to-content";
+import { AppNav } from "@/components/app/app-nav";
 import { FeedbackWidget } from "@/components/app/feedback-widget";
 import { MobileBottomNav } from "@/components/app/mobile-bottom-nav";
 import { LegalBanner } from "@/components/legal/legal-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/config/site";
-
-const NAV = [
-  { href: "/app", label: "Dashboard" },
-  { href: "/app/odds", label: "Odds" },
-  { href: "/app/scanner", label: "EV Scanner" },
-  { href: "/app/bets", label: "Bets" },
-  { href: "/app/bankroll", label: "Bankroll" },
-  { href: "/app/ai", label: "AI" },
-  { href: "/app/alerts", label: "Alerts" },
-  { href: "/app/arbitrage", label: "Arb" },
-  { href: "/app/settings", label: "Settings" },
-];
 
 export function AppShell({
   children,
@@ -27,19 +17,14 @@ export function AppShell({
 }) {
   return (
     <div className="min-h-screen bg-[var(--background)] pb-20 lg:pb-0">
+      <SkipToContent />
       <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--card)]/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-3 sm:px-4">
           <div className="flex min-w-0 items-center gap-6">
             <Link href="/app" className="truncate font-semibold tracking-tight">
               {APP_NAME}
             </Link>
-            <nav className="hidden items-center gap-4 text-sm text-[var(--muted-foreground)] lg:flex">
-              {NAV.map((item) => (
-                <Link key={item.href} href={item.href} className="hover:text-[var(--foreground)]">
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+            <AppNav />
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {email ? (
@@ -62,7 +47,9 @@ export function AppShell({
       <div className="mx-auto max-w-7xl px-3 py-2 sm:px-4">
         <LegalBanner compact />
       </div>
-      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6">{children}</main>
+      <main id="main-content" className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
+        {children}
+      </main>
       <MobileBottomNav />
       <FeedbackWidget />
     </div>

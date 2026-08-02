@@ -6,7 +6,7 @@ import { AffiliateDisclosureNote } from "@/components/legal/affiliate-note";
 import { Badge } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatAmerican } from "@/lib/betting/odds";
+import { FormattedOdds } from "@/components/app/formatted-odds";
 import {
   createInjuryProvider,
   createOddsProvider,
@@ -91,8 +91,11 @@ export default async function GamePage({
                   {q.market} · {q.selection}
                   {q.line != null ? ` ${q.line}` : ""} · {q.sportsbook}
                 </span>
-                <span className="font-mono">
-                  {formatAmerican(q.americanOdds)} ({formatPercent(q.impliedProbability)})
+                <span className="inline-flex items-center gap-1 font-mono">
+                  <FormattedOdds american={q.americanOdds} decimal={q.decimalOdds} />
+                  <span className="text-[var(--muted-foreground)]">
+                    ({formatPercent(q.impliedProbability)})
+                  </span>
                 </span>
               </div>
             ))}

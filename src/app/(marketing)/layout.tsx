@@ -1,3 +1,4 @@
+import { SkipToContent } from "@/components/a11y/skip-to-content";
 import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
 
 export default function MarketingLayout({
@@ -7,8 +8,11 @@ export default function MarketingLayout({
 }) {
   return (
     <>
+      <SkipToContent />
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
       <SiteFooter />
     </>
   );

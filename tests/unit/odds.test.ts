@@ -2,21 +2,31 @@ import { describe, expect, it } from "vitest";
 import {
   americanToDecimal,
   decimalToAmerican,
+  decimalToFractional,
   detectArbitrage,
   edge,
   expectedValue,
+  formatAmerican,
   fractionalKelly,
   fractionalToDecimal,
   impliedProbability,
   kellyFraction,
   noVigProbabilities,
+  parseAmerican,
+  payout,
+  profit,
   recommendedStake,
+  toDecimal,
 } from "@/lib/betting/odds";
 
 describe("odds conversion", () => {
   it("converts American to decimal", () => {
     expect(americanToDecimal(-110)).toBeCloseTo(1.9091, 3);
     expect(americanToDecimal(150)).toBeCloseTo(2.5, 5);
+  });
+
+  it("rejects zero American odds", () => {
+    expect(() => americanToDecimal(0)).toThrow(/zero/i);
   });
 
   it("converts decimal to American", () => {
@@ -26,6 +36,25 @@ describe("odds conversion", () => {
 
   it("converts fractional to decimal", () => {
     expect(fractionalToDecimal(5, 2)).toBe(3.5);
+  });
+
+  it("converts decimal to fractional", () => {
+    const { numerator, denominator } = decimalToFractional(2.5);
+    expect(numerator / denominator).toBeCloseTo(1.5, 5);
+  });
+
+  it("parses and formats American odds", () => {
+    expect(parseAmerican("+150")).toBe(150);
+    expect(parseAmerican("-110")).toBe(-110);
+    expect(formatAmerican(150)).toBe("+150");
+    expect(formatAmerican(-110)).toBe("-110");
+    expect(() => parseAmerican("0")).toThrow();
+  });
+
+  it("normalizes via toDecimal", () => {
+    expect(toDecimal(-110, "american")).toBeCloseTo(1.9091, 3);
+    expect(toDecimal(2.2, "decimal")).toBe(2.2);
+    expect(() => toDecimal(5, "fractional")).toThrow(/fractionalToDecimal/i);
   });
 });
 
@@ -62,6 +91,16 @@ describe("EV and Kelly", () => {
     expect(stake).toBeLessThanOrEqual(20);
     expect(stake).toBeGreaterThan(0);
   });
+
+  it("returns zero stake for empty bankroll or no edge", () => {
+    expect(recommendedStake(0, 0.6, 2.2)).toBe(0);
+    expect(kellyFraction(0.4, 2.0)).toBe(0);
+  });
+
+  it("computes payout and profit", () => {
+    expect(payout(100, 2.5)).toBe(250);
+    expect(profit(100, 2.5)).toBe(150);
+  });
 });
 
 describe("arbitrage detection", () => {
@@ -81,5 +120,11 @@ describe("arbitrage detection", () => {
       { outcome: "B", decimalOdds: 1.9, sportsbook: "Book2" },
     ]);
     expect(result.isArbitrage).toBe(false);
+  });
+
+  it("requires at least two legs", () => {
+    expect(() =>
+      detectArbitrage([{ outcome: "A", decimalOdds: 2.1, sportsbook: "Book1" }]),
+    ).toThrow(/two legs/i);
   });
 });

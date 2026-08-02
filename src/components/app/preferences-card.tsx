@@ -5,43 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/input";
 import { SUPPORTED_SPORTS } from "@/config/site";
+import {
+  DEFAULT_PREFS,
+  readUserPrefs,
+  writeUserPrefs,
+  type UserPrefs,
+} from "@/lib/prefs";
 
-const KEY = "ep_user_prefs";
-
-type Prefs = {
-  oddsFormat: "american" | "decimal" | "fractional";
-  favoriteSports: string[];
-  emailAlerts: boolean;
-  aiHistoryDefault: boolean;
-  alertFrequency: "low" | "normal" | "high";
-};
-
-const DEFAULTS: Prefs = {
-  oddsFormat: "american",
-  favoriteSports: ["NBA", "NFL"],
-  emailAlerts: true,
-  aiHistoryDefault: false,
-  alertFrequency: "normal",
-};
-
-function readPrefs(): Prefs {
-  if (typeof window === "undefined") return DEFAULTS;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return DEFAULTS;
-    return { ...DEFAULTS, ...(JSON.parse(raw) as Prefs) };
-  } catch {
-    return DEFAULTS;
-  }
+function persist(next: UserPrefs) {
+  writeUserPrefs(next);
+  window.dispatchEvent(new Event("ep-prefs-changed"));
 }
 
 export function PreferencesCard() {
-  const [prefs, setPrefs] = useState<Prefs>(readPrefs);
+  const [prefs, setPrefs] = useState<UserPrefs>(readUserPrefs);
   const [saved, setSaved] = useState(false);
 
-  function persist(next: Prefs) {
+  function save(next: UserPrefs) {
     setPrefs(next);
-    localStorage.setItem(KEY, JSON.stringify(next));
+    persist(next);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1500);
   }
@@ -51,7 +33,8 @@ export function PreferencesCard() {
       <CardHeader>
         <CardTitle>Preferences</CardTitle>
         <CardDescription>
-          Stored in this browser until Supabase profile sync is connected.
+          Stored in this browser until Supabase profile sync is connected. Odds format updates
+          quotes across Odds, Scanner, and Games.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
@@ -62,7 +45,7 @@ export function PreferencesCard() {
             className="flex h-10 w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3"
             value={prefs.oddsFormat}
             onChange={(e) =>
-              persist({ ...prefs, oddsFormat: e.target.value as Prefs["oddsFormat"] })
+              save({ ...prefs, oddsFormat: e.target.value as UserPrefs["oddsFormat"] })
             }
           >
             <option value="american">American</option>
@@ -85,7 +68,7 @@ export function PreferencesCard() {
                       const favoriteSports = checked
                         ? prefs.favoriteSports.filter((s) => s !== sport)
                         : [...prefs.favoriteSports, sport];
-                      persist({ ...prefs, favoriteSports });
+                      save({ ...prefs, favoriteSports });
                     }}
                   />
                   {sport}
@@ -102,9 +85,9 @@ export function PreferencesCard() {
             className="flex h-10 w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3"
             value={prefs.alertFrequency}
             onChange={(e) =>
-              persist({
+              save({
                 ...prefs,
-                alertFrequency: e.target.value as Prefs["alertFrequency"],
+                alertFrequency: e.target.value as UserPrefs["alertFrequency"],
               })
             }
           >
@@ -118,7 +101,7 @@ export function PreferencesCard() {
           <input
             type="checkbox"
             checked={prefs.emailAlerts}
-            onChange={(e) => persist({ ...prefs, emailAlerts: e.target.checked })}
+            onChange={(e) => save({ ...prefs, emailAlerts: e.target.checked })}
           />
           Email alerts (when Resend is configured)
         </label>
@@ -127,18 +110,13 @@ export function PreferencesCard() {
           <input
             type="checkbox"
             checked={prefs.aiHistoryDefault}
-            onChange={(e) => persist({ ...prefs, aiHistoryDefault: e.target.checked })}
+            onChange={(e) => save({ ...prefs, aiHistoryDefault: e.target.checked })}
           />
           Default AI history consent on
         </label>
 
         {saved ? <p className="text-xs text-[var(--primary)]">Saved</p> : null}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => persist(DEFAULTS)}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={() => save(DEFAULT_PREFS)}>
           Reset defaults
         </Button>
       </CardContent>

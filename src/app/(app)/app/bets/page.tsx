@@ -10,6 +10,7 @@ import { BetAnalytics } from "@/components/app/bet-analytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/states";
 import { betsToCsv, downloadTextFile } from "@/lib/betting/clv";
 import { americanToDecimal, impliedProbability } from "@/lib/betting/odds";
 import { formatCurrency, formatPercent } from "@/lib/utils";
@@ -308,7 +309,10 @@ export default function BetsPage() {
           {loading ? (
             <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>
           ) : bets.length === 0 ? (
-            <p className="text-sm text-[var(--muted-foreground)]">No bets logged yet.</p>
+            <EmptyState
+              title="No bets logged yet"
+              description="Track research bets manually above. Nothing here places a wager — it only logs outcomes for your review."
+            />
           ) : (
             bets.map((bet) => (
               <div
