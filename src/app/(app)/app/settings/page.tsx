@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PreferencesCard } from "@/components/app/preferences-card";
+import { WatchlistPanel } from "@/components/app/watchlist";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PLANS } from "@/config/pricing";
@@ -30,8 +32,10 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="font-[family-name:var(--font-brand)] text-3xl font-semibold">Settings</h1>
+    <div className="mx-auto max-w-2xl space-y-6 pb-8">
+      <h1 className="font-[family-name:var(--font-brand)] text-2xl font-semibold sm:text-3xl">
+        Settings
+      </h1>
 
       <Card>
         <CardHeader>
@@ -86,6 +90,32 @@ export default async function SettingsPage() {
               Stripe is not configured yet. Add keys from YOUR_NEXT_STEPS.md to enable checkout.
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      <PreferencesCard />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Watchlist</CardTitle>
+          <CardDescription>Games and markets you saved on this device</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <WatchlistPanel />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Beta tools</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/arbitrage">Arbitrage finder</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/api/health">System health</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

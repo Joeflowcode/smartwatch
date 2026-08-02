@@ -27,12 +27,16 @@
 - [x] Mobile bottom nav + responsive marketing header
 - [x] Landing conversion polish (“How the beta works”)
 - [x] Playwright demo-flow specs + AI safety unit tests
+- [x] Feature-flagged arbitrage UI (`NEXT_PUBLIC_FEATURE_arbitrageAlerts`)
+- [x] Local watchlists + game Watch button
+- [x] CLV math + CSV bet export
+- [x] Odds mobile stacked quotes + empty states
+- [x] Settings preferences + `/api/health`
 - [ ] Live The Odds API HTTP implementation with retry/timeout
 - [ ] OpenAI tool-calling assistant wired to providers
 - [ ] Admin live MRR queries
-- [ ] Alerts / watchlists + Resend emails
+- [ ] Email alerts via Resend
 - [ ] Affiliate click UI with disclosure
 - [ ] Feedback screenshot upload
-- [ ] Feature-flagged arbitrage UI
 
 See [YOUR_NEXT_STEPS.md](./YOUR_NEXT_STEPS.md) for the human dashboard checklist.

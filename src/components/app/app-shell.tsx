@@ -13,6 +13,7 @@ const NAV = [
   { href: "/app/bets", label: "Bets" },
   { href: "/app/bankroll", label: "Bankroll" },
   { href: "/app/ai", label: "AI" },
+  { href: "/app/arbitrage", label: "Arb" },
   { href: "/app/settings", label: "Settings" },
 ];
 

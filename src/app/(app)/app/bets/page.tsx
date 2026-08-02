@@ -10,6 +10,7 @@ import { BetAnalytics } from "@/components/app/bet-analytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
+import { betsToCsv, downloadTextFile } from "@/lib/betting/clv";
 import { americanToDecimal, impliedProbability } from "@/lib/betting/odds";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
@@ -180,12 +181,42 @@ export default function BetsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-brand)] text-3xl font-semibold">Bet tracker</h1>
-        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-          Manual logging only. Short-term win rate can be misleading.{" "}
-          {mode === "live" ? "Saving to your account." : "Demo mode — stored in this browser until Supabase is connected."}
-        </p>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="font-[family-name:var(--font-brand)] text-2xl font-semibold sm:text-3xl">
+            Bet tracker
+          </h1>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+            Manual logging only. Short-term win rate can be misleading.{" "}
+            {mode === "live"
+              ? "Saving to your account."
+              : "Demo mode — stored in this browser until Supabase is connected."}
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={bets.length === 0}
+          onClick={() => {
+            const csv = betsToCsv(
+              bets.map((b) => ({
+                sport: b.sport,
+                event: b.event,
+                market: b.market,
+                selection: b.selection,
+                sportsbook: b.sportsbook,
+                americanOdds: b.americanOdds,
+                stake: b.stake,
+                status: b.status,
+                notes: b.notes,
+              })),
+            );
+            downloadTextFile(`edgepilot-bets-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+          }}
+        >
+          Export CSV
+        </Button>
       </div>
 
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">

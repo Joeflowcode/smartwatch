@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getBankrollSettings, getRecentBetsForDashboard } from "@/app/actions/bankroll";
+import { DashboardWatchlistCard } from "@/components/app/dashboard-watchlist";
 import { LegalBanner } from "@/components/legal/legal-banner";
 import { Badge } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -169,7 +170,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Recent tracked bets</CardTitle>
@@ -197,6 +198,7 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        <DashboardWatchlistCard />
         <Card>
           <CardHeader>
             <CardTitle>Responsible use</CardTitle>

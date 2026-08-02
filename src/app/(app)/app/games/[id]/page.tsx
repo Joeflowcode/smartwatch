@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GameWatchActions } from "@/components/app/game-watch-actions";
 import { Badge } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,16 +58,22 @@ export default async function GamePage({
               </Badge>
             ) : null}
           </p>
-          <h1 className="font-[family-name:var(--font-brand)] text-3xl font-semibold">
+          <h1 className="font-[family-name:var(--font-brand)] text-2xl font-semibold sm:text-3xl">
             {event.awayTeamName} @ {event.homeTeamName}
           </h1>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             {new Date(event.startsAt).toLocaleString()} · {event.venue}
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/app">Back to dashboard</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <GameWatchActions
+            eventId={event.id}
+            label={`${event.awayTeamName} @ ${event.homeTeamName}`}
+          />
+          <Button asChild variant="outline">
+            <Link href="/app">Back</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
