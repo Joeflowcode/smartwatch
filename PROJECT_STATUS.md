@@ -15,6 +15,7 @@
 - [x] Admin metrics shell
 - [x] Docs + `.env.example`
 - [x] Lint / typecheck / test / build green
+- [x] Next.js `middleware.ts` → `proxy.ts` migration
 
 ## Milestone 2
 
