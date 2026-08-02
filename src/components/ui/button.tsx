@@ -4,13 +4,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium tracking-tight transition-[color,background-color,opacity,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
   {
     variants: {
       variant: {
-        default: "bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90",
+        default: "bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-92",
         secondary:
-          "bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90",
+          "bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-92",
         outline:
           "border border-[var(--border)] bg-transparent hover:bg-[var(--muted)]",
         ghost: "hover:bg-[var(--muted)]",
@@ -19,7 +19,7 @@ const buttonVariants = cva(
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-11 rounded-md px-8",
+        lg: "h-12 rounded-md px-8 text-[15px]",
         icon: "h-10 w-10",
       },
     },

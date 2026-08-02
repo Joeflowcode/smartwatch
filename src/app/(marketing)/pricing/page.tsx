@@ -33,7 +33,11 @@ export default function PricingPage() {
           return (
             <Card
               key={id}
-              className={plan.highlighted ? "border-[var(--primary)] shadow-md" : undefined}
+              className={
+                plan.highlighted
+                  ? "border-[var(--primary)] bg-[var(--card)] shadow-[0_18px_50px_-28px_rgba(10,107,82,0.45)]"
+                  : "bg-[var(--card)]/90"
+              }
             >
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
@@ -74,8 +78,8 @@ export default function PricingPage() {
                   <form action="/api/stripe/checkout" method="post" className="space-y-2">
                     <input type="hidden" name="plan" value={id} />
                     <input type="hidden" name="interval" value="monthly" />
-                    <Button type="submit" variant="ghost" className="w-full text-xs">
-                      Checkout with Stripe (if configured)
+                    <Button type="submit" variant="ghost" className="w-full text-xs text-[var(--muted-foreground)]">
+                      Or checkout with Stripe
                     </Button>
                   </form>
                 ) : null}
