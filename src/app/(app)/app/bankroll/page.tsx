@@ -11,6 +11,7 @@ import { fractionalKelly, recommendedStake } from "@/lib/betting/odds";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 const DEMO_LOSS_KEY = "ep_demo_bankroll_losses";
+const DEMO_SETTINGS_KEY = "ep_demo_bankroll_settings";
 
 function loadDemoLosses() {
   if (typeof window === "undefined") return { sessionLoss: 0, weekLoss: 0 };
@@ -21,6 +22,23 @@ function loadDemoLosses() {
     };
   } catch {
     return {};
+  }
+}
+
+function loadDemoSettings() {
+  if (typeof window === "undefined") return null;
+  try {
+    return JSON.parse(localStorage.getItem(DEMO_SETTINGS_KEY) ?? "null") as {
+      starting?: number;
+      current?: number;
+      monthlyBudget?: number;
+      maxStakePct?: number;
+      dailyLoss?: number;
+      weeklyLoss?: number;
+      kellyPct?: number;
+    } | null;
+  } catch {
+    return null;
   }
 }
 
@@ -77,13 +95,23 @@ export default function BankrollPage() {
       if (!result.ok) return;
       setMode(result.mode);
       const s = result.settings;
-      setStarting(Number(s.starting_bankroll ?? 0));
-      setCurrent(Number(s.current_bankroll ?? 0));
-      setMonthlyBudget(Number(s.monthly_budget ?? 0));
-      setMaxStakePct(Number(s.max_stake_percent ?? DEFAULT_BANKROLL.maxStakePercent) * 100);
-      setDailyLoss(Number(s.daily_loss_limit ?? 50));
-      setWeeklyLoss(Number(s.weekly_loss_limit ?? 100));
-      setKellyPct(Number(s.kelly_fraction ?? DEFAULT_BANKROLL.kellyFraction) * 100);
+      const demo = result.mode === "demo" ? loadDemoSettings() : null;
+      setStarting(Number(demo?.starting ?? s.starting_bankroll ?? 0));
+      setCurrent(Number(demo?.current ?? s.current_bankroll ?? 0));
+      setMonthlyBudget(Number(demo?.monthlyBudget ?? s.monthly_budget ?? 0));
+      setMaxStakePct(
+        Number(
+          demo?.maxStakePct ??
+            Number(s.max_stake_percent ?? DEFAULT_BANKROLL.maxStakePercent) * 100,
+        ),
+      );
+      setDailyLoss(Number(demo?.dailyLoss ?? s.daily_loss_limit ?? 50));
+      setWeeklyLoss(Number(demo?.weeklyLoss ?? s.weekly_loss_limit ?? 100));
+      setKellyPct(
+        Number(
+          demo?.kellyPct ?? Number(s.kelly_fraction ?? DEFAULT_BANKROLL.kellyFraction) * 100,
+        ),
+      );
     })();
   }, []);
 
@@ -124,7 +152,21 @@ export default function BankrollPage() {
       setMessage(result.error);
       return;
     }
-    setMessage(result.mode === "live" ? "Saved to your account." : "Saved for this demo session.");
+    if (result.mode === "demo") {
+      localStorage.setItem(
+        DEMO_SETTINGS_KEY,
+        JSON.stringify({
+          starting,
+          current,
+          monthlyBudget,
+          maxStakePct,
+          dailyLoss,
+          weeklyLoss,
+          kellyPct,
+        }),
+      );
+    }
+    setMessage(result.mode === "live" ? "Saved to your account." : "Saved in this browser for demo.");
   }
 
   const limitParts = [
