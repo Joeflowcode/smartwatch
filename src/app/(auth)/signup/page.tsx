@@ -14,6 +14,7 @@ function SignupForm() {
   const plan = params.get("plan");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -81,22 +82,50 @@ function SignupForm() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="password">Password</Label>
+            {isSupabaseConfigured() ? (
+              <button
+                type="button"
+                className="text-xs text-[var(--muted-foreground)] underline"
+                onClick={() => setShowPassword((v) => !v)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            ) : null}
+          </div>
           <Input
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="new-password"
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required={isSupabaseConfigured()}
+            disabled={!isSupabaseConfigured()}
+            placeholder={isSupabaseConfigured() ? "At least 8 characters" : "Not required in demo mode"}
           />
         </div>
-        {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
+        {plan ? (
+          <p className="text-xs text-[var(--muted-foreground)]">
+            Selected plan intent: <span className="font-medium text-[var(--foreground)]">{plan}</span>{" "}
+            (applied after Stripe is connected).
+          </p>
+        ) : null}
+        {error ? (
+          <p className="text-sm text-[var(--destructive)]" role="alert">
+            {error}
+          </p>
+        ) : null}
         {message ? <p className="text-sm text-[var(--primary)]">{message}</p> : null}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Creating…" : isSupabaseConfigured() ? "Sign up" : "Continue in demo mode"}
         </Button>
+        {!isSupabaseConfigured() ? (
+          <p className="text-center text-xs text-[var(--muted-foreground)]">
+            Demo explores mock research tools. Connect Supabase for real accounts.
+          </p>
+        ) : null}
       </form>
     </AuthCard>
   );
