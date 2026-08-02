@@ -205,11 +205,24 @@ export default function BankrollPage() {
               <LossBar label="Daily loss usage" used={sessionLoss} limit={dailyLoss} />
               <LossBar label="Weekly loss usage" used={weekLoss} limit={weeklyLoss} />
             </div>
-            <div className="sm:col-span-2">
+            <div className="flex flex-wrap gap-2 sm:col-span-2">
               <Button type="button" onClick={() => void onSave()} disabled={saving}>
                 {saving ? "Saving…" : "Save limits"}
               </Button>
-              {message ? <p className="mt-2 text-sm text-[var(--muted-foreground)]">{message}</p> : null}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSessionLoss(0);
+                  setWeekLoss(0);
+                  setMessage("Demo cool-off: session and week losses reset locally.");
+                }}
+              >
+                Start cool-off (demo)
+              </Button>
+              {message ? (
+                <p className="w-full text-sm text-[var(--muted-foreground)]">{message}</p>
+              ) : null}
             </div>
           </CardContent>
         </Card>

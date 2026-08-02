@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FavoriteSportsHint } from "@/components/app/favorite-sports-filter";
 import { FormattedOdds } from "@/components/app/formatted-odds";
 import { AffiliateDisclosureNote, SportsbookLabel } from "@/components/legal/affiliate-note";
 import { Badge } from "@/components/ui/input";
@@ -39,6 +40,7 @@ export default async function OddsPage({
       </div>
 
       <AffiliateDisclosureNote compact />
+      <FavoriteSportsHint sport={params.sport} />
 
       <form className="grid grid-cols-2 gap-3 text-sm sm:flex sm:flex-wrap">
         <select
