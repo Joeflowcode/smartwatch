@@ -14,6 +14,7 @@ function LoginForm() {
   const next = params.get("next") ?? "/app";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -80,20 +81,42 @@ function LoginForm() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="password">Password</Label>
+            {isSupabaseConfigured() ? (
+              <button
+                type="button"
+                className="text-xs text-[var(--muted-foreground)] underline"
+                onClick={() => setShowPassword((v) => !v)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            ) : null}
+          </div>
           <Input
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required={isSupabaseConfigured()}
+            disabled={!isSupabaseConfigured()}
+            placeholder={isSupabaseConfigured() ? undefined : "Not required in demo mode"}
           />
         </div>
-        {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
+        {error ? (
+          <p className="text-sm text-[var(--destructive)]" role="alert">
+            {error}
+          </p>
+        ) : null}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Signing in…" : isSupabaseConfigured() ? "Log in" : "Continue in demo mode"}
         </Button>
+        {!isSupabaseConfigured() ? (
+          <p className="text-center text-xs text-[var(--muted-foreground)]">
+            Optional email labels the demo session. Connect Supabase to enable real auth.
+          </p>
+        ) : null}
       </form>
     </AuthCard>
   );
