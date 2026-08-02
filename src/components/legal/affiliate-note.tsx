@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { isFeatureEnabled } from "@/config/features";
+import { track } from "@/lib/analytics";
 
 /** Always-visible affiliate disclosure near outbound book links. */
 export function AffiliateDisclosureNote({ compact = false }: { compact?: boolean }) {
@@ -27,12 +31,21 @@ export function AffiliateDisclosureNote({ compact = false }: { compact?: boolean
   );
 }
 
+/** Demo partner destinations — disabled unless NEXT_PUBLIC_FEATURE_affiliateLinks=true. */
+export const DEMO_AFFILIATE_HREFS: Record<string, string> = {
+  DraftKings: "https://example.com/affiliate/draftkings",
+  FanDuel: "https://example.com/affiliate/fanduel",
+  BetMGM: "https://example.com/affiliate/betmgm",
+};
+
 export function LabeledAffiliateLink({
   href,
+  partner,
   children,
   allowed = false,
 }: {
   href: string;
+  partner?: string;
   children: React.ReactNode;
   /** Only true when partner is active + jurisdiction allowed. */
   allowed?: boolean;
@@ -47,9 +60,25 @@ export function LabeledAffiliateLink({
       target="_blank"
       rel="noopener noreferrer sponsored"
       className="underline underline-offset-2"
+      onClick={() =>
+        track("affiliate_link_clicked", {
+          partner: partner ?? href,
+          href,
+        })
+      }
     >
       {children}
       <span className="ml-1 text-[10px] text-[var(--muted-foreground)]">(affiliate)</span>
     </a>
+  );
+}
+
+export function SportsbookLabel({ name }: { name: string }) {
+  const href = DEMO_AFFILIATE_HREFS[name];
+  if (!isFeatureEnabled("affiliateLinks") || !href) return <span>{name}</span>;
+  return (
+    <LabeledAffiliateLink href={href} partner={name} allowed>
+      {name}
+    </LabeledAffiliateLink>
   );
 }

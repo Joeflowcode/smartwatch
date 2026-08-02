@@ -10,6 +10,49 @@ import { DEFAULT_BANKROLL } from "@/config/site";
 import { fractionalKelly, recommendedStake } from "@/lib/betting/odds";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
+const DEMO_LOSS_KEY = "ep_demo_bankroll_losses";
+
+function loadDemoLosses() {
+  if (typeof window === "undefined") return { sessionLoss: 0, weekLoss: 0 };
+  try {
+    return JSON.parse(localStorage.getItem(DEMO_LOSS_KEY) ?? "{}") as {
+      sessionLoss?: number;
+      weekLoss?: number;
+    };
+  } catch {
+    return {};
+  }
+}
+
+function LossBar({
+  label,
+  used,
+  limit,
+}: {
+  label: string;
+  used: number;
+  limit: number;
+}) {
+  const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+  const over = limit > 0 && used >= limit;
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs text-[var(--muted-foreground)]">
+        <span>{label}</span>
+        <span>
+          {formatCurrency(used)} / {formatCurrency(limit || 0)}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-[var(--muted)]">
+        <div
+          className={`h-full rounded-full ${over ? "bg-[var(--destructive)]" : "bg-[var(--primary)]"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function BankrollPage() {
   const [starting, setStarting] = useState(1000);
   const [current, setCurrent] = useState(1000);
@@ -18,8 +61,10 @@ export default function BankrollPage() {
   const [dailyLoss, setDailyLoss] = useState(50);
   const [weeklyLoss, setWeeklyLoss] = useState(100);
   const [kellyPct, setKellyPct] = useState(DEFAULT_BANKROLL.kellyFraction * 100);
-  const [sessionLoss, setSessionLoss] = useState(0);
-  const [weekLoss, setWeekLoss] = useState(0);
+  const [sessionLoss, setSessionLoss] = useState(() =>
+    Number(loadDemoLosses().sessionLoss ?? 0),
+  );
+  const [weekLoss, setWeekLoss] = useState(() => Number(loadDemoLosses().weekLoss ?? 0));
   const [modelProb, setModelProb] = useState(0.55);
   const [decimalOdds, setDecimalOdds] = useState(2.0);
   const [mode, setMode] = useState<"demo" | "live">("demo");
@@ -41,6 +86,13 @@ export default function BankrollPage() {
       setKellyPct(Number(s.kelly_fraction ?? DEFAULT_BANKROLL.kellyFraction) * 100);
     })();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      DEMO_LOSS_KEY,
+      JSON.stringify({ sessionLoss, weekLoss }),
+    );
+  }, [sessionLoss, weekLoss]);
 
   const overDaily = sessionLoss >= dailyLoss && dailyLoss > 0;
   const overWeekly = weekLoss >= weeklyLoss && weeklyLoss > 0;
@@ -75,6 +127,11 @@ export default function BankrollPage() {
     setMessage(result.mode === "live" ? "Saved to your account." : "Saved for this demo session.");
   }
 
+  const limitParts = [
+    overDaily ? "daily" : null,
+    overWeekly ? "weekly" : null,
+  ].filter(Boolean);
+
   return (
     <div className="space-y-6">
       <div>
@@ -91,8 +148,9 @@ export default function BankrollPage() {
         <div className="rounded-lg border border-[var(--destructive)]/40 bg-[var(--destructive)]/10 p-4">
           <p className="font-medium text-[var(--destructive)]">Loss limit reached</p>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-            You exceeded a self-selected {overDaily ? "daily" : "weekly"} loss limit. Consider a
-            cool-off break. Promotional upsells are disabled on this page.
+            You exceeded your self-selected {limitParts.join(" and ")} loss limit
+            {limitParts.length > 1 ? "s" : ""}. Consider a cool-off break. You can still raise limits
+            if needed — promotional upsells stay off this page.
           </p>
           <Button asChild variant="outline" size="sm" className="mt-3">
             <Link href="/responsible-use">Responsible gambling resources</Link>
@@ -143,8 +201,12 @@ export default function BankrollPage() {
               <Label>Week loss (demo)</Label>
               <Input type="number" value={weekLoss} onChange={(e) => setWeekLoss(Number(e.target.value))} />
             </div>
+            <div className="space-y-3 sm:col-span-2">
+              <LossBar label="Daily loss usage" used={sessionLoss} limit={dailyLoss} />
+              <LossBar label="Weekly loss usage" used={weekLoss} limit={weeklyLoss} />
+            </div>
             <div className="sm:col-span-2">
-              <Button type="button" onClick={() => void onSave()} disabled={saving || overDaily || overWeekly}>
+              <Button type="button" onClick={() => void onSave()} disabled={saving}>
                 {saving ? "Saving…" : "Save limits"}
               </Button>
               {message ? <p className="mt-2 text-sm text-[var(--muted-foreground)]">{message}</p> : null}

@@ -30,9 +30,26 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
-          <p className="mt-6 text-xs text-[var(--muted-foreground)]">
-            Must meet the legal gambling age in your jurisdiction. {SUPPORTED_SPORTS.join(" · ")}
-          </p>
+        </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 opacity-40 md:block"
+        >
+          <div className="absolute inset-8 rounded-none border border-[var(--border)]/40 bg-[var(--card)]/30 p-6 shadow-[inset_0_0_80px_var(--hero-glow)] backdrop-blur-[2px]">
+            <div className="space-y-3 font-mono text-[11px] text-[var(--muted-foreground)]">
+              <p className="text-[var(--foreground)]">ODDS · NBA · moneyline</p>
+              <p>BOS −118 · best · FanDuel</p>
+              <p>NYK +108 · DraftKings</p>
+              <p className="text-[var(--primary)]">EV +2.1% · medium quality</p>
+              <p>Fresh · mock provider</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-[var(--border)] bg-[var(--card)]/60">
+        <div className="mx-auto max-w-6xl px-4 py-4 text-xs text-[var(--muted-foreground)] sm:px-6">
+          Legal gambling age required. Beta sports: {SUPPORTED_SPORTS.join(" · ")}.
         </div>
       </section>
 

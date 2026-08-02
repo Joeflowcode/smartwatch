@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FormattedOdds } from "@/components/app/formatted-odds";
-import { AffiliateDisclosureNote } from "@/components/legal/affiliate-note";
+import { AffiliateDisclosureNote, SportsbookLabel } from "@/components/legal/affiliate-note";
 import { Badge } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/states";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -131,7 +131,8 @@ export default async function OddsPage({
                               />
                             </div>
                             <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                              {q.sportsbook} · implied {formatPercent(q.impliedProbability)} ·{" "}
+                              <SportsbookLabel name={q.sportsbook} /> · implied{" "}
+                              {formatPercent(q.impliedProbability)} ·{" "}
                               {new Date(q.updatedAt).toLocaleTimeString()}
                             </p>
                           </div>
@@ -166,7 +167,9 @@ export default async function OddsPage({
                                   {q.selection}
                                   {q.line != null ? ` (${q.line})` : ""}
                                 </td>
-                                <td className="py-2">{q.sportsbook}</td>
+                                <td className="py-2">
+                                  <SportsbookLabel name={q.sportsbook} />
+                                </td>
                                 <td className="py-2">
                                   <FormattedOdds
                                     american={q.americanOdds}

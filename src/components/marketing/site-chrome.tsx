@@ -10,7 +10,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-14 items-center justify-between gap-3 px-3 sm:h-16 sm:gap-4 sm:px-6 md:max-w-6xl">
         <Link
           href="/"
-          className="truncate font-[family-name:var(--font-display)] text-base font-semibold tracking-tight sm:text-lg"
+          className="truncate font-[family-name:var(--font-brand)] text-base font-semibold tracking-tight sm:text-lg"
         >
           {APP_NAME}
         </Link>

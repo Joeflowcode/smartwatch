@@ -44,9 +44,9 @@
 - [x] Shared contact Zod schema + expanded unit tests (providers, entitlements, odds, AI)
 - [x] Live The Odds API HTTP implementation with retry/timeout
 - [x] OpenAI chat provider with safety pre-checks (tool-calling can deepen later)
-- [ ] Admin live MRR queries
+- [ ] Admin live MRR queries (offline shell clarifies demo vs connected)
 - [x] Resend email provider adapter (alert cron / templates still open)
-- [ ] Live affiliate click tracking
-- [ ] Feedback screenshot upload
+- [x] Affiliate click tracking hooks + feature-flagged book labels
+- [x] Feedback screenshot metadata attachment (Storage upload later)
 
 See [YOUR_NEXT_STEPS.md](./YOUR_NEXT_STEPS.md) for the human dashboard checklist.

@@ -4,7 +4,10 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { submitFeedback } from "@/app/actions/feedback";
 import { Button } from "@/components/ui/button";
-import { Label, Textarea } from "@/components/ui/input";
+import { Input, Label, Textarea } from "@/components/ui/input";
+import { track } from "@/lib/analytics";
+
+type ScreenshotMeta = { name: string; size: number; type: string; preview?: string };
 
 export function FeedbackWidget() {
   const pathname = usePathname();
@@ -13,8 +16,27 @@ export function FeedbackWidget() {
   const [message, setMessage] = useState("");
   const [score, setScore] = useState<number | null>(null);
   const [diagnostics, setDiagnostics] = useState(false);
+  const [screenshot, setScreenshot] = useState<ScreenshotMeta | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  async function onScreenshot(file: File | null) {
+    if (!file) {
+      setScreenshot(null);
+      return;
+    }
+    if (!file.type.startsWith("image/") || file.size > 1_500_000) {
+      setStatus("Screenshot must be an image under 1.5MB.");
+      return;
+    }
+    const preview = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? "").slice(0, 120_000));
+      reader.onerror = () => reject(new Error("read failed"));
+      reader.readAsDataURL(file);
+    }).catch(() => undefined);
+    setScreenshot({ name: file.name, size: file.size, type: file.type, preview });
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,22 +48,34 @@ export function FeedbackWidget() {
       pagePath: pathname,
       satisfactionScore: score,
       collectDiagnostics: diagnostics,
-      browserMeta: diagnostics
-        ? {
-            userAgent: navigator.userAgent,
-            language: navigator.language,
-            viewport: `${window.innerWidth}x${window.innerHeight}`,
-          }
-        : undefined,
+      browserMeta: {
+        ...(diagnostics
+          ? {
+              userAgent: navigator.userAgent,
+              language: navigator.language,
+              viewport: `${window.innerWidth}x${window.innerHeight}`,
+            }
+          : {}),
+        ...(screenshot
+          ? {
+              screenshotName: screenshot.name,
+              screenshotSize: screenshot.size,
+              screenshotType: screenshot.type,
+              screenshotPreview: screenshot.preview,
+            }
+          : {}),
+      },
     });
     setLoading(false);
     if (!result.ok) {
       setStatus(result.error);
       return;
     }
+    track("feedback_submitted", { category, hasScreenshot: Boolean(screenshot) });
     setStatus(result.message);
     setMessage("");
     setScore(null);
+    setScreenshot(null);
   }
 
   return (
@@ -122,6 +156,22 @@ export function FeedbackWidget() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="fb-shot">Optional screenshot (local preview only)</Label>
+                <Input
+                  id="fb-shot"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => void onScreenshot(e.target.files?.[0] ?? null)}
+                />
+                {screenshot ? (
+                  <p className="text-[10px] text-[var(--muted-foreground)]">
+                    Attached {screenshot.name} ({Math.round(screenshot.size / 1024)} KB). Stored with
+                    feedback metadata until Supabase Storage is wired.
+                  </p>
+                ) : null}
               </div>
 
               <label className="flex items-start gap-2 text-xs text-[var(--muted-foreground)]">

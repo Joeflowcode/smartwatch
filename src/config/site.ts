@@ -7,6 +7,7 @@ export const SUPPORTED_SPORTS = ["NBA", "NFL", "MLB", "NHL"] as const;
 export type SupportedSport = (typeof SUPPORTED_SPORTS)[number];
 
 export const FEATURE_FLAGS = {
+  affiliateLinks: false,
   arbitrageAlerts: false,
   playerPropModeling: false,
   creatorWorkspaces: false,

@@ -25,6 +25,9 @@ export async function submitFeedback(input: FeedbackInput) {
   const data = parsed.data;
 
   // Always keep a local audit trail in logs for demo / when DB unavailable.
+  const meta = data.browserMeta ?? {};
+  const hasScreenshot = Boolean(meta.screenshotName);
+
   console.info("[feedback]", {
     userId: user?.id,
     email: user?.email,
@@ -32,6 +35,8 @@ export async function submitFeedback(input: FeedbackInput) {
     pagePath: data.pagePath,
     satisfactionScore: data.satisfactionScore,
     message: data.message.slice(0, 200),
+    hasScreenshot,
+    screenshotName: meta.screenshotName,
   });
 
   if (!user || user.isDemo) {
@@ -58,7 +63,7 @@ export async function submitFeedback(input: FeedbackInput) {
     message: data.message,
     page_path: data.pagePath ?? null,
     satisfaction_score: data.satisfactionScore ?? null,
-    browser_meta: data.collectDiagnostics ? (data.browserMeta ?? {}) : {},
+    browser_meta: data.collectDiagnostics || hasScreenshot ? meta : {},
     status: "open",
   });
 

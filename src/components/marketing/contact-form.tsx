@@ -39,7 +39,7 @@ export function ContactForm() {
           setLoading(false);
           return;
         }
-        track("signup_started", { source: "contact_form" });
+        track("contact_submitted", { source: "contact_form" });
         console.info("[contact]", {
           name: parsed.data.name,
           email: parsed.data.email,

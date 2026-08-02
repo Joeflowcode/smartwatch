@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { AffiliateDisclosureTracker } from "@/components/marketing/affiliate-disclosure-tracker";
 
 export const metadata: Metadata = { title: "Affiliate disclosure" };
 
 export default function AffiliateDisclosurePage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <AffiliateDisclosureTracker />
       <h1 className="font-[family-name:var(--font-brand)] text-4xl font-semibold tracking-tight">
         Affiliate disclosure
       </h1>

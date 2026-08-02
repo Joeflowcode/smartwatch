@@ -15,7 +15,9 @@ export type AnalyticsEvent =
   | "alert_created"
   | "bet_logged"
   | "affiliate_disclosure_viewed"
-  | "affiliate_link_clicked";
+  | "affiliate_link_clicked"
+  | "contact_submitted"
+  | "feedback_submitted";
 
 export function track(event: AnalyticsEvent, properties?: Record<string, unknown>) {
   if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {

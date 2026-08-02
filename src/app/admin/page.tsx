@@ -1,11 +1,15 @@
 import { PLANS } from "@/config/pricing";
 import { FEATURE_FLAGS } from "@/config/site";
 import { getSessionUser } from "@/lib/auth/session";
+import { isStripeConfigured } from "@/lib/stripe/client";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminPage() {
   const user = await getSessionUser();
+  const liveBilling = isStripeConfigured() && isSupabaseConfigured();
+  const flagsOn = Object.values(FEATURE_FLAGS).filter(Boolean).length;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-10">
@@ -18,18 +22,42 @@ export default async function AdminPage() {
         </p>
       </div>
 
+      {!liveBilling ? (
+        <p className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--muted)]/30 px-4 py-3 text-sm text-[var(--muted-foreground)]">
+          Metrics are offline until Supabase + Stripe are connected. Plan catalog and flags below
+          are live config, not revenue data.
+        </p>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Users", value: "—" },
-          { label: "MRR estimate", value: formatCurrency(0) },
-          { label: "Trial conversions", value: "—" },
-          { label: "Churn", value: "—" },
+          {
+            label: "Users",
+            value: liveBilling ? "…" : "Demo",
+            hint: liveBilling ? "Querying…" : "Connect Supabase",
+          },
+          {
+            label: "MRR estimate",
+            value: liveBilling ? formatCurrency(0) : "Not connected",
+            hint: liveBilling ? "Stripe + subscriptions" : "Needs Stripe webhook sync",
+          },
+          {
+            label: "Trial conversions",
+            value: liveBilling ? "…" : "Demo",
+            hint: "Last 30 days",
+          },
+          {
+            label: "Churn",
+            value: liveBilling ? "…" : "Demo",
+            hint: "Canceled / active",
+          },
         ].map((item) => (
           <Card key={item.label}>
             <CardHeader className="pb-2">
               <CardDescription>{item.label}</CardDescription>
-              <CardTitle>{item.value}</CardTitle>
+              <CardTitle className="text-xl">{item.value}</CardTitle>
             </CardHeader>
+            <CardContent className="text-xs text-[var(--muted-foreground)]">{item.hint}</CardContent>
           </Card>
         ))}
       </div>
@@ -37,19 +65,22 @@ export default async function AdminPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Plans</CardTitle>
+            <CardTitle>Plans ({Object.keys(PLANS).length})</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted-foreground)]">
             {Object.values(PLANS).map((p) => (
               <p key={p.id}>
-                {p.name}: {formatCurrency(p.monthlyPriceUsd)}/mo
+                {p.name}: {formatCurrency(p.monthlyPriceUsd)}/mo · AI/day{" "}
+                {p.limits.dailyAiQuestions}
               </p>
             ))}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Feature flags</CardTitle>
+            <CardTitle>
+              Feature flags ({flagsOn} on / {Object.keys(FEATURE_FLAGS).length})
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted-foreground)]">
             {Object.entries(FEATURE_FLAGS).map(([key, enabled]) => (
@@ -65,7 +96,7 @@ export default async function AdminPage() {
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted-foreground)]">
             Connect Supabase to populate AI usage, sports-data costs, alert volume, and affiliate
-            clicks. Follow YOUR_NEXT_STEPS.md in the repo.
+            clicks. Health endpoint: <code className="text-xs">/api/health</code>.
           </CardContent>
         </Card>
         <Card>
