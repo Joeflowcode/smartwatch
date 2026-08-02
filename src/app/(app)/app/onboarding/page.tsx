@@ -79,6 +79,16 @@ export default function OnboardingPage() {
             We collect only what we need for research preferences and compliance acknowledgments.
             With Supabase connected, this saves to your profile.
           </CardDescription>
+          <ol className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--muted-foreground)]">
+            {["Profile", "Preferences", "Age gate", "Finish"].map((step, idx) => (
+              <li
+                key={step}
+                className="rounded-md border border-[var(--border)] bg-[var(--muted)]/40 px-2 py-1"
+              >
+                <span className="text-[var(--primary)]">{idx + 1}.</span> {step}
+              </li>
+            ))}
+          </ol>
         </CardHeader>
         <CardContent>
           <form className="space-y-5" onSubmit={onSubmit}>
@@ -182,11 +192,24 @@ export default function OnboardingPage() {
               </span>
             </label>
 
-            {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
+            {error ? (
+              <p className="text-sm text-[var(--destructive)]" role="alert">
+                {error}
+              </p>
+            ) : null}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || !isLegalAge || !responsible}
+            >
               {loading ? "Saving…" : "Complete onboarding"}
             </Button>
+            {!isLegalAge || !responsible ? (
+              <p className="text-center text-xs text-[var(--muted-foreground)]">
+                Confirm legal age and responsible-use acknowledgments to continue.
+              </p>
+            ) : null}
           </form>
         </CardContent>
       </Card>
