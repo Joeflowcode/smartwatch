@@ -5,36 +5,21 @@ import {
   REFUSAL_MESSAGE,
   RISK_NUDGE,
 } from "@/lib/ai/safety";
+import { AI_TOOL_SPECS, runAiTool, type ToolName } from "@/lib/ai/tools";
 import type { AIMessage, AIProvider } from "@/lib/providers/types";
 import { createMeta } from "@/lib/providers/types";
-import { MockOddsProvider } from "@/lib/providers/mock-odds";
 
 const SYSTEM = `You are EdgePilot AI, a sports betting research assistant — not a sportsbook.
 Rules:
 - Separate factual market data from interpretation.
+- Use tools for slate/odds/sizing facts when helpful.
 - Never guarantee winners, promise profits, or help place bets.
 - Refuse match-fixing, insider tips, underage gambling, or restriction bypass.
-- Cite tool/context ids when you use them (e.g. mock-events:evt-nba-1).
 - Prefer conservative bankroll language (quarter-Kelly, loss limits).
 - If data is missing, say so plainly.`;
 
-async function loadGroundingContext(): Promise<string> {
-  const odds = new MockOddsProvider();
-  const [{ data: events }, { data: quotes }] = await Promise.all([
-    odds.getEvents(),
-    odds.getOdds({ markets: ["moneyline"] }),
-  ]);
-  const lines = events.slice(0, 8).map((e) => {
-    const ml = quotes.filter((q) => q.eventId === e.id);
-    const best = ml.sort((a, b) => b.decimalOdds - a.decimalOdds)[0];
-    return `- [${e.id}] ${e.awayTeamName} @ ${e.homeTeamName} (${e.sportId}) ${best ? `best ML ${best.selection} ${best.americanOdds} @ ${best.sportsbook}` : ""}`;
-  });
-  return ["Available slate context:", ...lines].join("\n");
-}
-
 /**
- * OpenAI chat adapter with safety pre-checks and grounded system context.
- * Full tool-calling can expand on this when live providers are connected.
+ * OpenAI chat adapter with safety pre-checks and optional tool-calling.
  */
 export class OpenAIProvider implements AIProvider {
   readonly name = "openai";
@@ -55,20 +40,51 @@ export class OpenAIProvider implements AIProvider {
       };
     }
 
-    const grounding = await loadGroundingContext();
     const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+    const citations: string[] = [];
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      { role: "system", content: SYSTEM },
+      ...params.messages.map((m) => ({
+        role: m.role as "user" | "assistant" | "system",
+        content: m.content,
+      })),
+    ];
 
-    const completion = await this.client.chat.completions.create({
+    // First pass may request tools.
+    let completion = await this.client.chat.completions.create({
       model,
       temperature: 0.3,
-      messages: [
-        { role: "system", content: `${SYSTEM}\n\n${grounding}` },
-        ...params.messages.map((m) => ({
-          role: m.role as "user" | "assistant" | "system",
-          content: m.content,
-        })),
-      ],
+      tools: AI_TOOL_SPECS,
+      messages,
     });
+
+    const first = completion.choices[0]?.message;
+    if (first?.tool_calls?.length) {
+      messages.push(first);
+      for (const call of first.tool_calls) {
+        if (call.type !== "function") continue;
+        const name = call.function.name as ToolName;
+        let args: Record<string, unknown> = {};
+        try {
+          args = JSON.parse(call.function.arguments || "{}") as Record<string, unknown>;
+        } catch {
+          args = {};
+        }
+        const toolResult = await runAiTool(name, args);
+        citations.push(...toolResult.citations);
+        messages.push({
+          role: "tool",
+          tool_call_id: call.id,
+          content: toolResult.content,
+        });
+      }
+
+      completion = await this.client.chat.completions.create({
+        model,
+        temperature: 0.3,
+        messages,
+      });
+    }
 
     let content =
       completion.choices[0]?.message?.content?.trim() ||
@@ -78,13 +94,13 @@ export class OpenAIProvider implements AIProvider {
       content += RISK_NUDGE;
     }
 
-    const citations = Array.from(content.matchAll(/\[?(evt-[a-z0-9-]+)\]?/gi)).map(
+    const extra = Array.from(content.matchAll(/\[?(evt-[a-z0-9-]+)\]?/gi)).map(
       (m) => `context:${m[1]}`,
     );
 
     return {
       content,
-      citations: [...new Set(citations)].slice(0, 8),
+      citations: [...new Set([...citations, ...extra])].slice(0, 12),
       meta: createMeta(this.name, false),
     };
   }
