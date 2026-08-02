@@ -1,15 +1,17 @@
 import { PLANS } from "@/config/pricing";
 import { FEATURE_FLAGS } from "@/config/site";
+import { getAdminMetrics } from "@/lib/admin/metrics";
 import { getSessionUser } from "@/lib/auth/session";
-import { isStripeConfigured } from "@/lib/stripe/client";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminPage() {
-  const user = await getSessionUser();
-  const liveBilling = isStripeConfigured() && isSupabaseConfigured();
+  const [user, metrics] = await Promise.all([getSessionUser(), getAdminMetrics()]);
   const flagsOn = Object.values(FEATURE_FLAGS).filter(Boolean).length;
+  const churn =
+    metrics.activePaid != null && metrics.canceled != null && metrics.activePaid + metrics.canceled > 0
+      ? `${((metrics.canceled / (metrics.activePaid + metrics.canceled)) * 100).toFixed(1)}%`
+      : null;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-10">
@@ -22,7 +24,7 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      {!liveBilling ? (
+      {metrics.mode === "demo" ? (
         <p className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--muted)]/30 px-4 py-3 text-sm text-[var(--muted-foreground)]">
           Metrics are offline until Supabase + Stripe are connected. Plan catalog and flags below
           are live config, not revenue data.
@@ -33,23 +35,23 @@ export default async function AdminPage() {
         {[
           {
             label: "Users",
-            value: liveBilling ? "…" : "Demo",
-            hint: liveBilling ? "Querying…" : "Connect Supabase",
+            value: metrics.users == null ? "Demo" : String(metrics.users),
+            hint: metrics.mode === "demo" ? "Connect Supabase" : "profiles count",
           },
           {
             label: "MRR estimate",
-            value: liveBilling ? formatCurrency(0) : "Not connected",
-            hint: liveBilling ? "Stripe + subscriptions" : "Needs Stripe webhook sync",
+            value: metrics.mrrUsd == null ? "Not connected" : formatCurrency(metrics.mrrUsd),
+            hint: metrics.mode === "demo" ? "Needs Stripe webhook sync" : "list-price × paid plans",
           },
           {
-            label: "Trial conversions",
-            value: liveBilling ? "…" : "Demo",
-            hint: "Last 30 days",
+            label: "Trials",
+            value: metrics.trialCount == null ? "Demo" : String(metrics.trialCount),
+            hint: "status = trialing",
           },
           {
-            label: "Churn",
-            value: liveBilling ? "…" : "Demo",
-            hint: "Canceled / active",
+            label: "Churn proxy",
+            value: churn ?? "Demo",
+            hint: "canceled / (active paid + canceled)",
           },
         ].map((item) => (
           <Card key={item.label}>
@@ -61,6 +63,14 @@ export default async function AdminPage() {
           </Card>
         ))}
       </div>
+
+      {metrics.notes.length ? (
+        <ul className="list-disc space-y-1 pl-5 text-xs text-[var(--muted-foreground)]">
+          {metrics.notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

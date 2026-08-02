@@ -7,7 +7,16 @@ import {
   noVigProbabilities,
   recommendedStake,
 } from "@/lib/betting/odds";
-import { createOddsProvider } from "@/lib/providers";
+import { MockOddsProvider } from "@/lib/providers/mock-odds";
+import { TheOddsApiProvider } from "@/lib/providers/the-odds-api";
+import type { OddsProvider } from "@/lib/providers/odds-provider";
+
+function oddsProvider(): OddsProvider {
+  if (process.env.ODDS_PROVIDER === "the-odds-api" && process.env.ODDS_API_KEY) {
+    return new TheOddsApiProvider(process.env.ODDS_API_KEY);
+  }
+  return new MockOddsProvider();
+}
 
 export type ToolName = "get_slate" | "explain_probabilities" | "size_stake";
 
@@ -60,7 +69,7 @@ export async function runAiTool(
   name: ToolName,
   args: Record<string, unknown>,
 ): Promise<{ content: string; citations: string[] }> {
-  const odds = createOddsProvider();
+  const odds = oddsProvider();
 
   if (name === "get_slate") {
     const sport = typeof args.sport === "string" ? args.sport : undefined;
