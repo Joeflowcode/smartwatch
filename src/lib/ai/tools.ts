@@ -1,4 +1,3 @@
-import { MockOddsProvider } from "@/lib/providers/mock-odds";
 import {
   americanToDecimal,
   expectedValue,
@@ -8,6 +7,7 @@ import {
   noVigProbabilities,
   recommendedStake,
 } from "@/lib/betting/odds";
+import { createOddsProvider } from "@/lib/providers";
 
 export type ToolName = "get_slate" | "explain_probabilities" | "size_stake";
 
@@ -60,7 +60,7 @@ export async function runAiTool(
   name: ToolName,
   args: Record<string, unknown>,
 ): Promise<{ content: string; citations: string[] }> {
-  const odds = new MockOddsProvider();
+  const odds = createOddsProvider();
 
   if (name === "get_slate") {
     const sport = typeof args.sport === "string" ? args.sport : undefined;
