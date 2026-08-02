@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalBanner } from "@/components/legal/legal-banner";
+import { PricingTracker } from "@/components/marketing/pricing-tracker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/input";
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export default function PricingPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <PricingTracker />
       <div className="max-w-2xl">
         <h1 className="font-[family-name:var(--font-brand)] text-4xl font-semibold tracking-tight">
           Simple pricing for serious research

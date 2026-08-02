@@ -63,7 +63,8 @@ describe("utils", () => {
 });
 
 describe("feature flags", () => {
-  it("defaults arbitrageAlerts off", () => {
+  it("defaults arbitrageAlerts and affiliateLinks off", () => {
     expect(isFeatureEnabled("arbitrageAlerts")).toBe(false);
+    expect(isFeatureEnabled("affiliateLinks")).toBe(false);
   });
 });

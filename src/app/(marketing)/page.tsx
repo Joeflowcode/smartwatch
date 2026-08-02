@@ -33,14 +33,14 @@ export default function HomePage() {
         </div>
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 opacity-40 md:block"
+          className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 opacity-50 md:block"
         >
-          <div className="absolute inset-8 rounded-none border border-[var(--border)]/40 bg-[var(--card)]/30 p-6 shadow-[inset_0_0_80px_var(--hero-glow)] backdrop-blur-[2px]">
+          <div className="absolute inset-8 animate-fade-up-delay border border-[var(--border)]/40 bg-[var(--card)]/35 p-6 shadow-[inset_0_0_80px_var(--hero-glow)] backdrop-blur-[2px]">
             <div className="space-y-3 font-mono text-[11px] text-[var(--muted-foreground)]">
               <p className="text-[var(--foreground)]">ODDS · NBA · moneyline</p>
               <p>BOS −118 · best · FanDuel</p>
               <p>NYK +108 · DraftKings</p>
-              <p className="text-[var(--primary)]">EV +2.1% · medium quality</p>
+              <p className="animate-pulse-soft text-[var(--primary)]">EV +2.1% · medium quality</p>
               <p>Fresh · mock provider</p>
             </div>
           </div>

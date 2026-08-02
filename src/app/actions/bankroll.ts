@@ -5,16 +5,7 @@ import { z } from "zod";
 import { DEFAULT_BANKROLL } from "@/config/site";
 import { requireSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-
-const BankrollSchema = z.object({
-  startingBankroll: z.number().nonnegative(),
-  currentBankroll: z.number().nonnegative(),
-  monthlyBudget: z.number().nonnegative().nullable(),
-  maxStakePercent: z.number().positive().max(1),
-  dailyLossLimit: z.number().nonnegative().nullable(),
-  weeklyLossLimit: z.number().nonnegative().nullable(),
-  kellyFraction: z.number().positive().max(1),
-});
+import { BankrollSchema } from "@/lib/validation/bankroll";
 
 export async function getBankrollSettings() {
   const user = await requireSessionUser();

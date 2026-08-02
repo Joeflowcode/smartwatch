@@ -4,21 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-
-const BetSchema = z.object({
-  sport: z.string().min(1).max(40),
-  league: z.string().max(40).optional().nullable(),
-  eventLabel: z.string().min(1).max(200),
-  market: z.string().min(1).max(40),
-  selection: z.string().min(1).max(120),
-  sportsbook: z.string().min(1).max(80),
-  americanOdds: z.number().int(),
-  stake: z.number().positive(),
-  notes: z.string().max(2000).optional().nullable(),
-  tags: z.array(z.string()).max(20).optional(),
-});
-
-const StatusSchema = z.enum(["open", "won", "lost", "push", "void"]);
+import { BetSchema, BetStatusSchema } from "@/lib/validation/bets";
 
 export async function listTrackedBets() {
   const user = await requireSessionUser();
@@ -90,8 +76,8 @@ export async function createTrackedBet(input: z.infer<typeof BetSchema>) {
   return { ok: true as const, mode: "live" as const, bet: data };
 }
 
-export async function updateTrackedBetStatus(betId: string, status: z.infer<typeof StatusSchema>) {
-  const parsedStatus = StatusSchema.safeParse(status);
+export async function updateTrackedBetStatus(betId: string, status: z.infer<typeof BetStatusSchema>) {
+  const parsedStatus = BetStatusSchema.safeParse(status);
   if (!parsedStatus.success || !z.string().uuid().safeParse(betId).success) {
     return { ok: false as const, error: "Invalid update." };
   }
