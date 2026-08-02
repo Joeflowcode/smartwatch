@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PLANS } from "@/config/pricing";
 import { getUserSubscription } from "@/lib/auth/subscription";
 import { FormattedOdds } from "@/components/app/formatted-odds";
+import { EmptyState } from "@/components/ui/states";
 import { createOddsProvider } from "@/lib/providers";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
@@ -161,7 +162,15 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {evs.length === 0 ? (
-              <p className="text-sm text-[var(--muted-foreground)]">No positive EV in mock set.</p>
+              <EmptyState
+                title="No positive EV candidates"
+                description="Markets look fairly priced right now. Compare books or open the scanner after the next refresh."
+                action={
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/app/scanner">Open EV scanner</Link>
+                  </Button>
+                }
+              />
             ) : (
               evs.map((op) => (
                 <div key={op.id} className="rounded-lg border border-[var(--border)] px-3 py-3 text-sm">

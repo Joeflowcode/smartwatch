@@ -11,19 +11,29 @@ export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setMessage(null);
+    setLoading(true);
+
     if (!isSupabaseConfigured()) {
       setMessage("Password reset requires Supabase configuration.");
+      setLoading(false);
       return;
     }
     const supabase = createClient();
-    if (!supabase) return;
+    if (!supabase) {
+      setError("Authentication is not configured.");
+      setLoading(false);
+      return;
+    }
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/api/auth/callback?next=/app/settings`,
     });
+    setLoading(false);
     if (resetError) setError(resetError.message);
     else setMessage("If an account exists, a reset link has been sent.");
   }
@@ -44,15 +54,24 @@ export default function ResetPasswordPage() {
           <Input
             id="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
-        {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
-        {message ? <p className="text-sm text-[var(--primary)]">{message}</p> : null}
-        <Button type="submit" className="w-full">
-          Send reset link
+        {error ? (
+          <p className="text-sm text-[var(--destructive)]" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {message ? (
+          <p className="text-sm text-[var(--primary)]" role="status">
+            {message}
+          </p>
+        ) : null}
+        <Button type="submit" className="w-full" disabled={loading || !email.trim()}>
+          {loading ? "Sending…" : "Send reset link"}
         </Button>
       </form>
     </AuthCard>

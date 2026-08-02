@@ -85,20 +85,27 @@ export default async function GamePage({
             <CardDescription>Market consensus from available books</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            {odds.map((q) => (
-              <div key={q.id} className="flex justify-between gap-2 border-b border-[var(--border)] py-2 last:border-0">
-                <span>
-                  {q.market} · {q.selection}
-                  {q.line != null ? ` ${q.line}` : ""} · {q.sportsbook}
-                </span>
-                <span className="inline-flex items-center gap-1 font-mono">
-                  <FormattedOdds american={q.americanOdds} decimal={q.decimalOdds} />
-                  <span className="text-[var(--muted-foreground)]">
-                    ({formatPercent(q.impliedProbability)})
+            {odds.length === 0 ? (
+              <p className="text-[var(--muted-foreground)]">No quotes available for this game yet.</p>
+            ) : (
+              odds.map((q) => (
+                <div
+                  key={q.id}
+                  className="flex justify-between gap-2 border-b border-[var(--border)] py-2 last:border-0"
+                >
+                  <span>
+                    {q.market} · {q.selection}
+                    {q.line != null ? ` ${q.line}` : ""} · {q.sportsbook}
                   </span>
-                </span>
-              </div>
-            ))}
+                  <span className="inline-flex items-center gap-1 font-mono">
+                    <FormattedOdds american={q.americanOdds} decimal={q.decimalOdds} />
+                    <span className="text-[var(--muted-foreground)]">
+                      ({formatPercent(q.impliedProbability)})
+                    </span>
+                  </span>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 
@@ -121,14 +128,18 @@ export default async function GamePage({
             <CardTitle>Injuries</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            {injuries.map((inj) => (
-              <div key={inj.id}>
-                <p className="font-medium">
-                  {inj.playerName} · {inj.status}
-                </p>
-                <p className="text-[var(--muted-foreground)]">{inj.description}</p>
-              </div>
-            ))}
+            {injuries.length === 0 ? (
+              <p className="text-[var(--muted-foreground)]">No injury notes in the current sample.</p>
+            ) : (
+              injuries.map((inj) => (
+                <div key={inj.id}>
+                  <p className="font-medium">
+                    {inj.playerName} · {inj.status}
+                  </p>
+                  <p className="text-[var(--muted-foreground)]">{inj.description}</p>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 

@@ -50,7 +50,7 @@
 - [ ] Log a bet; bankroll limit warning works
 - [ ] Stripe checkout test mode + portal
 - [ ] Webhook updates subscription row
-- [ ] `/admin` reachable only for admins (enforce RLS + middleware role check before public launch)
+- [ ] `/admin` reachable only for admins (enforce RLS + `proxy.ts` role check before public launch)
 - [ ] No service role key in client bundle
 
 ## Rollback

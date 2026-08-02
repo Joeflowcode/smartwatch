@@ -53,7 +53,8 @@ function SignupForm() {
       return;
     }
     setMessage("Check your email to verify your account, then continue onboarding.");
-    router.push("/verify-email");
+    const qs = email ? `?email=${encodeURIComponent(email)}` : "";
+    router.push(`/verify-email${qs}`);
   }
 
   return (

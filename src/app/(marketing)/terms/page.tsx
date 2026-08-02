@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Terms of Service" };
 
@@ -26,6 +28,14 @@ export default function TermsPage() {
           limits apply by plan. We may suspend accounts that abuse the service or attempt illegal
           activity.
         </p>
+      </div>
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Button asChild variant="outline">
+          <Link href="/contact">Questions? Contact us</Link>
+        </Button>
+        <Button asChild variant="ghost">
+          <Link href="/responsible-use">Responsible use</Link>
+        </Button>
       </div>
     </div>
   );

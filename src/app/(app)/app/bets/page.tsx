@@ -7,6 +7,7 @@ import {
   updateTrackedBetStatus,
 } from "@/app/actions/bets";
 import { BetAnalytics } from "@/components/app/bet-analytics";
+import { FormattedOdds } from "@/components/app/formatted-odds";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -329,9 +330,9 @@ export default function BetsPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono">
-                    {bet.americanOdds > 0 ? `+${bet.americanOdds}` : bet.americanOdds} ·{" "}
-                    {formatCurrency(bet.stake)}
+                  <span className="inline-flex items-center gap-1 font-mono">
+                    <FormattedOdds american={bet.americanOdds} />
+                    <span>· {formatCurrency(bet.stake)}</span>
                   </span>
                   <select
                     className="h-8 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs"

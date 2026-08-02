@@ -8,14 +8,21 @@ import { ContactSchema } from "@/lib/validation/contact";
 
 export function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
+  const [delivered, setDelivered] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   if (submitted) {
     return (
       <p className="rounded-lg border border-[var(--border)] bg-[var(--muted)] p-4 text-sm" role="status">
-        Thanks — your message was recorded for this demo. Connect Resend and a support inbox to
-        deliver messages in production.
+        {delivered
+          ? "Thanks — your message was sent. We aim to respond within two business days."
+          : "Thanks — your message was recorded for this demo. Add RESEND_API_KEY and CONTACT_INBOX to deliver email in production."}{" "}
+        Or email{" "}
+        <a className="underline" href="mailto:hello@edgepilot.ai">
+          hello@edgepilot.ai
+        </a>
+        .
       </p>
     );
   }
@@ -39,14 +46,26 @@ export function ContactForm() {
           setLoading(false);
           return;
         }
-        track("contact_submitted", { source: "contact_form" });
-        console.info("[contact]", {
-          name: parsed.data.name,
-          email: parsed.data.email,
-          message: parsed.data.message.slice(0, 120),
-        });
-        setSubmitted(true);
-        setLoading(false);
+        void (async () => {
+          const response = await fetch("/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(parsed.data),
+          });
+          const result = (await response.json()) as {
+            ok?: boolean;
+            delivered?: boolean;
+            error?: string;
+          };
+          setLoading(false);
+          if (!response.ok) {
+            setError(result.error ?? "Could not send message");
+            return;
+          }
+          track("contact_submitted", { delivered: Boolean(result.delivered) });
+          setDelivered(Boolean(result.delivered));
+          setSubmitted(true);
+        })();
       }}
     >
       <div className="space-y-2">

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Privacy Policy" };
 
@@ -27,7 +29,18 @@ export default function PrivacyPage() {
           configured. AI prompts may include application data you request to analyze; do not submit
           sensitive personal data unnecessarily.
         </p>
-        <p>Contact privacy questions via the Contact page.</p>
+        <p>
+          Privacy questions:{" "}
+          <Link href="/contact" className="text-[var(--primary)] underline underline-offset-2">
+            Contact
+          </Link>
+          .
+        </p>
+      </div>
+      <div className="mt-10">
+        <Button asChild variant="outline">
+          <Link href="/contact">Contact us</Link>
+        </Button>
       </div>
     </div>
   );
