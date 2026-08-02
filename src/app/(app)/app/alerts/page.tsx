@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { sendTestAlertEmail } from "@/app/actions/alerts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -38,6 +39,8 @@ export default function AlertsPage() {
   const [label, setLabel] = useState("");
   const [threshold, setThreshold] = useState(2);
   const [channel, setChannel] = useState<AlertRule["channel"]>("in_app");
+  const [emailStatus, setEmailStatus] = useState<string | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
 
   const activeCount = useMemo(() => rules.filter((r) => r.active).length, [rules]);
 
@@ -129,11 +132,34 @@ export default function AlertsPage() {
                 <option value="email">Email (when configured)</option>
               </select>
             </div>
-            <div className="flex items-end">
+            <div className="flex flex-wrap items-end gap-2 sm:col-span-2">
               <Button type="submit" className="w-full sm:w-auto">
                 Save alert
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                disabled={emailLoading || !label.trim()}
+                onClick={() => {
+                  void (async () => {
+                    setEmailLoading(true);
+                    setEmailStatus(null);
+                    const result = await sendTestAlertEmail({
+                      label: label.trim() || "Test research alert",
+                      detail: `${type.replaceAll("_", " ")} threshold ${threshold}`,
+                    });
+                    setEmailLoading(false);
+                    setEmailStatus(result.ok ? result.message : result.error);
+                  })();
+                }}
+              >
+                {emailLoading ? "Sending…" : "Send test email"}
+              </Button>
             </div>
+            {emailStatus ? (
+              <p className="text-xs text-[var(--muted-foreground)] sm:col-span-2">{emailStatus}</p>
+            ) : null}
           </form>
         </CardContent>
       </Card>

@@ -45,7 +45,8 @@
 - [x] Live The Odds API HTTP implementation with retry/timeout
 - [x] OpenAI chat provider with safety pre-checks (tool-calling can deepen later)
 - [ ] Admin live MRR queries (offline shell clarifies demo vs connected)
-- [x] Resend email provider adapter (alert cron / templates still open)
+- [x] Resend email provider adapter + test alert email action
+- [ ] Scheduled alert fan-out cron / job queue
 - [x] Affiliate click tracking hooks + feature-flagged book labels
 - [x] Feedback screenshot metadata attachment (Storage upload later)
 
