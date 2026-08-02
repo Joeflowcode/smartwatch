@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FeedbackWidget } from "@/components/app/feedback-widget";
+import { MobileBottomNav } from "@/components/app/mobile-bottom-nav";
 import { LegalBanner } from "@/components/legal/legal-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -22,11 +24,11 @@ export function AppShell({
   email?: string;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      <header className="border-b border-[var(--border)] bg-[var(--card)]">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4">
-          <div className="flex items-center gap-6">
-            <Link href="/app" className="font-semibold tracking-tight">
+    <div className="min-h-screen bg-[var(--background)] pb-20 lg:pb-0">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--card)]/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-3 sm:px-4">
+          <div className="flex min-w-0 items-center gap-6">
+            <Link href="/app" className="truncate font-semibold tracking-tight">
               {APP_NAME}
             </Link>
             <nav className="hidden items-center gap-4 text-sm text-[var(--muted-foreground)] lg:flex">
@@ -37,12 +39,14 @@ export function AppShell({
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {email ? (
-              <span className="hidden text-xs text-[var(--muted-foreground)] sm:inline">{email}</span>
+              <span className="hidden max-w-[140px] truncate text-xs text-[var(--muted-foreground)] md:inline">
+                {email}
+              </span>
             ) : null}
             <ThemeToggle />
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
               <Link href="/pricing">Upgrade</Link>
             </Button>
             <form action="/api/auth/logout" method="post">
@@ -52,18 +56,13 @@ export function AppShell({
             </form>
           </div>
         </div>
-        <div className="flex gap-3 overflow-x-auto border-t border-[var(--border)] px-4 py-2 text-xs text-[var(--muted-foreground)] lg:hidden">
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href}>
-              {item.label}
-            </Link>
-          ))}
-        </div>
       </header>
-      <div className="mx-auto max-w-7xl px-4 py-2">
+      <div className="mx-auto max-w-7xl px-3 py-2 sm:px-4">
         <LegalBanner compact />
       </div>
-      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6">{children}</main>
+      <MobileBottomNav />
+      <FeedbackWidget />
     </div>
   );
 }

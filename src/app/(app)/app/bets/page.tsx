@@ -6,6 +6,7 @@ import {
   listTrackedBets,
   updateTrackedBetStatus,
 } from "@/app/actions/bets";
+import { BetAnalytics } from "@/components/app/bet-analytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -187,7 +188,7 @@ export default function BetsPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total staked</CardDescription>
@@ -217,6 +218,8 @@ export default function BetsPage() {
           </CardHeader>
         </Card>
       </div>
+
+      <BetAnalytics bets={bets} />
 
       <Card>
         <CardHeader>

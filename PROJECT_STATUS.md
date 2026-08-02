@@ -21,13 +21,18 @@
 - [x] Persist bets/bankroll/onboarding to Supabase (demo fallback retained)
 - [x] Server-enforced plan gates on scanner/AI quotas
 - [x] Admin role middleware (`app_metadata.role` + `ADMIN_EMAILS`)
+- [x] Stronger AI chat UX + safety refusals + grounded mock tools
+- [x] Bet tracker performance analytics (equity + breakdowns)
+- [x] In-app feedback / bug-report widget
+- [x] Mobile bottom nav + responsive marketing header
+- [x] Landing conversion polish (“How the beta works”)
+- [x] Playwright demo-flow specs + AI safety unit tests
 - [ ] Live The Odds API HTTP implementation with retry/timeout
 - [ ] OpenAI tool-calling assistant wired to providers
 - [ ] Admin live MRR queries
 - [ ] Alerts / watchlists + Resend emails
 - [ ] Affiliate click UI with disclosure
-- [ ] Feedback widget + screenshot upload
-- [ ] Playwright e2e for core flows
+- [ ] Feedback screenshot upload
 - [ ] Feature-flagged arbitrage UI
 
 See [YOUR_NEXT_STEPS.md](./YOUR_NEXT_STEPS.md) for the human dashboard checklist.

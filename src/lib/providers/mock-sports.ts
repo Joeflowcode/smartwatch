@@ -1,5 +1,4 @@
 import type {
-  AIProvider,
   EmailProvider,
   InjuryProvider,
   SportsDataProvider,
@@ -78,48 +77,6 @@ export class MockWeatherProvider implements WeatherProvider {
       data: outdoor
         ? { temperatureF: 72, condition: "Clear (mock)", windMph: 8 }
         : null,
-      meta: createMeta(this.name, true),
-    };
-  }
-}
-
-const REFUSAL_PATTERNS = [
-  /match.?fix/i,
-  /insider/i,
-  /guaranteed/i,
-  /underage/i,
-  /bypass.*(geo|age|restriction)/i,
-  /place.*(bet|wager).*for me/i,
-];
-
-export class MockAIProvider implements AIProvider {
-  readonly name = "mock-ai";
-
-  async chat(params: { messages: { role: string; content: string }[] }) {
-    const last = params.messages.filter((m) => m.role === "user").at(-1)?.content ?? "";
-    if (REFUSAL_PATTERNS.some((p) => p.test(last))) {
-      return {
-        content:
-          "I can't help with requests involving match fixing, insider information, guaranteed outcomes, underage gambling, or placing bets. EdgePilot AI is a research tool only. If you're feeling pressure to wager, consider setting a cool-off limit and visit responsible gambling resources.",
-        citations: [],
-        meta: createMeta(this.name, true),
-      };
-    }
-
-    return {
-      content: [
-        "**Research summary (mock grounded response)**",
-        "",
-        "Based on available mock application data:",
-        "- Tonight's sample slate includes NBA, MLB, and upcoming NFL/NHL events.",
-        "- Odds are labeled as mock and may be stale; always check timestamps.",
-        "- Model probabilities are estimates and can be wrong due to injuries, lineup changes, or market information not yet reflected in our data.",
-        "",
-        "**Factual vs interpretation:** Event times and quoted odds are factual records from the provider. Any edge or EV figure is an interpretation — not a prediction of a certain outcome.",
-        "",
-        "This is development mock output. Connect an AI API key for live grounded answers.",
-      ].join("\n"),
-      citations: ["mock-odds:evt-nba-1", "mock-odds:snapshot"],
       meta: createMeta(this.name, true),
     };
   }

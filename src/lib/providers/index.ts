@@ -1,7 +1,7 @@
 import type { OddsProvider } from "@/lib/providers/odds-provider";
 import { MockOddsProvider } from "@/lib/providers/mock-odds";
+import { MockAIProvider } from "@/lib/providers/mock-ai";
 import {
-  MockAIProvider,
   MockEmailProvider,
   MockInjuryProvider,
   MockSportsDataProvider,

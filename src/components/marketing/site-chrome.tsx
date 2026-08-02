@@ -14,8 +14,11 @@ const NAV = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--border)]/80 bg-[var(--background)]/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight">
+      <div className="mx-auto flex h-14 items-center justify-between gap-3 px-3 sm:h-16 sm:gap-4 sm:px-6 md:max-w-6xl">
+        <Link
+          href="/"
+          className="truncate font-[family-name:var(--font-display)] text-base font-semibold tracking-tight sm:text-lg"
+        >
           {APP_NAME}
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-[var(--muted-foreground)] md:flex">
@@ -25,15 +28,22 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <ThemeToggle />
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
             <Link href="/login">Log in</Link>
           </Button>
           <Button asChild size="sm">
             <Link href="/signup">Start free</Link>
           </Button>
         </div>
+      </div>
+      <div className="flex gap-4 overflow-x-auto border-t border-[var(--border)]/60 px-3 py-2 text-xs text-[var(--muted-foreground)] md:hidden">
+        {NAV.map((item) => (
+          <Link key={item.href} href={item.href} className="shrink-0">
+            {item.label}
+          </Link>
+        ))}
       </div>
     </header>
   );
