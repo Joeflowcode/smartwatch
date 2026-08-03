@@ -88,6 +88,21 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - Resend: `RESEND_API_KEY` (+ `EMAIL_FROM`)
 - PostHog / Sentry
 
+## 6) Ship iOS + Android (native Expo app in `mobile/`)
+
+The store apps are scaffolded as a real Expo native UI (not a WebView of the site).
+
+1. Install Xcode / Android Studio (or use EAS cloud builds only)
+2. `cd mobile && npm install && npx expo start` → try **Continue with demo**
+3. Create Expo account → `npm i -g eas-cli && eas login && eas init`
+4. Replace `extra.eas.projectId` in `mobile/app.json`
+5. Apple Developer + App Store Connect app id `ai.edgepilot.app`
+6. Google Play Console app id `ai.edgepilot.app`
+7. `eas build --platform all --profile production`
+8. Follow [mobile/STORE_SUBMISSION.md](./mobile/STORE_SUBMISSION.md) for listing copy, age ratings, gambling disclosures
+9. After web API is live: set EAS secrets `EXPO_PUBLIC_API_URL`, Supabase keys, then rebuild
+
 ---
 
-**When you’re done with steps 1–3**, reply with “Supabase + Stripe connected” (or paste any error) and I’ll help verify webhooks / fix whatever fails.
+**When you’re done with steps 1–3**, reply with “Supabase + Stripe connected” (or paste any error) and I’ll help verify webhooks / fix whatever fails.  
+**For stores**, reply with “EAS ready” after `eas init` and I’ll help with the first TestFlight / Play internal upload.

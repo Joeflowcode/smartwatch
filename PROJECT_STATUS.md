@@ -51,4 +51,20 @@
 - [x] Affiliate click tracking hooks + feature-flagged book labels
 - [x] Feedback screenshot metadata attachment (Storage upload later)
 
+## Milestone 3 — Native mobile (App Store / Play)
+
+- [x] Expo SDK 57 app in `mobile/` (Expo Router, dark EdgePilot theme)
+- [x] Welcome / email auth shell / age + research onboarding
+- [x] Tabs: Home, Odds, EV Scanner, AI, More
+- [x] Bankroll, Bets, Settings screens (local prefs)
+- [x] Mock slate / EV / AI coach (on-device until API keys)
+- [x] Branded icon + splash palette (`#0C1F19` / accent)
+- [x] EAS Build profiles + store submission guide
+- [ ] `eas init` + real EAS project id
+- [ ] Wire Supabase Auth + `EXPO_PUBLIC_API_URL` for live data
+- [ ] Production store screenshots + final legal URLs
+- [ ] First TestFlight / Play internal track builds
+
+See [mobile/README.md](./mobile/README.md) and [mobile/STORE_SUBMISSION.md](./mobile/STORE_SUBMISSION.md).
+
 See [YOUR_NEXT_STEPS.md](./YOUR_NEXT_STEPS.md) for the human dashboard checklist.

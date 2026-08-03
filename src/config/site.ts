@@ -13,7 +13,7 @@ export const FEATURE_FLAGS = {
   creatorWorkspaces: false,
   publicApi: false,
   advancedModelTraining: false,
-  mobileNative: false,
+  mobileNative: true,
   sportsbookConnections: false,
 } as const;
 
