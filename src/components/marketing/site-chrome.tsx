@@ -1,0 +1,94 @@
+import Link from "next/link";
+import { MarketingNav } from "@/components/marketing/site-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import { APP_NAME } from "@/config/site";
+
+export function SiteHeader() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[var(--hero-deep)]/90 text-[#e8f5ef] backdrop-blur-xl">
+      <div className="mx-auto flex h-14 items-center justify-between gap-3 px-3 sm:h-16 sm:gap-4 sm:px-6 md:max-w-6xl">
+        <Link
+          href="/"
+          className="truncate font-[family-name:var(--font-brand)] text-base font-semibold tracking-tight text-white sm:text-lg"
+        >
+          {APP_NAME}
+        </Link>
+        <MarketingNav className="hidden items-center gap-6 text-sm text-[#b7d0c5] md:flex [&_a[aria-current=page]]:text-white" />
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <ThemeToggle />
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="hidden text-[#d7ebe2] hover:bg-white/10 hover:text-white sm:inline-flex"
+          >
+            <Link href="/login">Log in</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            className="bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-95"
+          >
+            <Link href="/signup">Start free</Link>
+          </Button>
+        </div>
+      </div>
+      <MarketingNav
+        compact
+        className="flex gap-4 overflow-x-auto border-t border-white/10 px-3 py-2 text-xs text-[#b7d0c5] md:hidden [&_a[aria-current=page]]:text-white"
+      />
+    </header>
+  );
+}
+
+export function SiteFooter() {
+  return (
+    <footer className="mt-auto border-t border-[var(--border)] bg-[var(--card)]">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
+        <div className="md:col-span-2">
+          <p className="font-[family-name:var(--font-brand)] text-xl font-semibold tracking-tight">
+            {APP_NAME}
+          </p>
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--muted-foreground)]">
+            Research tool for comparing odds, understanding probability, and managing bankroll
+            discipline. Not a sportsbook. No guaranteed outcomes.
+          </p>
+        </div>
+        <div className="space-y-2.5 text-sm">
+          <p className="font-medium tracking-tight">Product</p>
+          <Link href="/features" className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Features
+          </Link>
+          <Link href="/pricing" className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Pricing
+          </Link>
+          <Link href="/methodology" className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Methodology
+          </Link>
+          <Link href="/contact" className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Contact
+          </Link>
+        </div>
+        <div className="space-y-2.5 text-sm">
+          <p className="font-medium tracking-tight">Legal</p>
+          <Link href="/responsible-use" className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Responsible use
+          </Link>
+          <Link href="/terms" className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Terms
+          </Link>
+          <Link href="/privacy" className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Privacy
+          </Link>
+          <Link href="/affiliate-disclosure" className="block text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Affiliate disclosure
+          </Link>
+        </div>
+      </div>
+      <div className="border-t border-[var(--border)] px-4 py-4 text-center text-xs text-[var(--muted-foreground)]">
+        © {new Date().getFullYear()} {APP_NAME}. For users of legal gambling age only.
+      </div>
+    </footer>
+  );
+}

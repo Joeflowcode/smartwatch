@@ -1,79 +1,62 @@
-# Data Project Template
+# EdgePilot AI
 
-<a target="_blank" href="https://datalumina.com/">
-    <img src="https://img.shields.io/badge/Datalumina-Project%20Template-2856f7" alt="Datalumina Project" />
-</a>
+AI-powered sports betting **research** assistant. Compare odds, estimate expected value, track bets, and manage bankroll limits — with transparent AI explanations.
 
-## Cookiecutter Data Science
-This project template is a simplified version of the [Cookiecutter Data Science](https://cookiecutter-data-science.drivendata.org) template, created to suit the needs of Datalumina and made available as a GitHub template.
+**Not a sportsbook.** We do not accept wagers, custody funds, or guarantee outcomes.
 
-## Adjusting .gitignore
+Tagline: *Research the edge. Control the risk.*
 
-Ensure you adjust the `.gitignore` file according to your project needs. For example, since this is a template, the `/data/` folder is commented out and data will not be exlucded from source control:
+## Your next actions
 
-```plaintext
-# exclude data from source control by default
-# /data/
-```
+If you are the project owner connecting services, start here: **[YOUR_NEXT_STEPS.md](./YOUR_NEXT_STEPS.md)** (Supabase + Stripe + smoke test).
 
-Typically, you want to exclude this folder if it contains either sensitive data that you do not want to add to version control or large files.
+## Stack
 
-## Duplicating the .env File
-To set up your environment variables, you need to duplicate the `.env.example` file and rename it to `.env`. You can do this manually or using the following terminal command:
+- Next.js (App Router) + TypeScript + Tailwind CSS
+- Supabase (Auth, Postgres, RLS)
+- Stripe subscriptions
+- Provider abstractions for odds, sports data, AI, and email
+- Vitest + Playwright
+
+## Quick start
 
 ```bash
-cp .env.example .env # Linux, macOS, Git Bash, WSL
-copy .env.example .env # Windows Command Prompt
+cp .env.example .env.local
+npm install
+npm run dev
 ```
 
-This command creates a copy of `.env.example` and names it `.env`, allowing you to configure your environment variables specific to your setup.
+Open [http://localhost:3000](http://localhost:3000).
 
+Without Supabase keys, use **demo mode**: Sign up / Log in continues with a local cookie and mock sports data.
 
-## Project Organization
+### Common commands
 
-```
-├── LICENSE            <- Open-source license if one is chosen
-├── README.md          <- The top-level README for developers using this project
-├── data
-│   ├── external       <- Data from third party sources
-│   ├── interim        <- Intermediate data that has been transformed
-│   ├── processed      <- The final, canonical data sets for modeling
-│   └── raw            <- The original, immutable data dump
-│
-├── models             <- Trained and serialized models, model predictions, or model summaries
-│
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`
-│
-├── references         <- Data dictionaries, manuals, and all other explanatory materials
-│
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
-│
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
-│
-└── src                         <- Source code for this project
-    │
-    ├── __init__.py             <- Makes src a Python module
-    │
-    ├── config.py               <- Store useful variables and configuration
-    │
-    ├── dataset.py              <- Scripts to download or generate data
-    │
-    ├── features.py             <- Code to create features for modeling
-    │
-    │    
-    ├── modeling                
-    │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
-    │
-    ├── plots.py                <- Code to create visualizations 
-    │
-    └── services                <- Service classes to connect with external platforms, tools, or APIs
-        └── __init__.py 
+```bash
+npm run dev          # development server
+npm run build        # production build
+npm run lint         # ESLint
+npm run typecheck    # TypeScript
+npm test             # Vitest unit tests
+npm run test:e2e     # Playwright (server must be running)
 ```
 
---------
+## Documentation
+
+| Doc | Purpose |
+|-----|---------|
+| [SETUP.md](./SETUP.md) | Local environment setup |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Supabase, Stripe, Vercel go-live |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design |
+| [DATABASE.md](./DATABASE.md) | Schema & RLS |
+| [SECURITY.md](./SECURITY.md) | Security baseline |
+| [API_INTEGRATIONS.md](./API_INTEGRATIONS.md) | Provider adapters |
+| [MONETIZATION.md](./MONETIZATION.md) | Plans & Stripe |
+| [RESPONSIBLE_USE.md](./RESPONSIBLE_USE.md) | Responsible gambling |
+| [BETA_LAUNCH.md](./BETA_LAUNCH.md) | Launch sequence |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Contribution guide |
+| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | Living checklist |
+
+## License
+
+Private / proprietary unless otherwise stated.
