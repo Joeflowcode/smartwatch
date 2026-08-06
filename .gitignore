@@ -88,9 +88,17 @@ target/
 
 # Exclude virtual environment
 .venv/
+venv/
 
 # Exclude trained models
 /models/
+
+# Runtime inventory (user deals)
+data/raw/inventory.json
+
+# Pytest / caches
+.pytest_cache/
+.ruff_cache/
 
 # exclude data from source control by default
 # /data/

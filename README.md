@@ -1,79 +1,74 @@
-# Data Project Template
+# CouchHaul
 
-<a target="_blank" href="https://datalumina.com/">
-    <img src="https://img.shields.io/badge/Datalumina-Project%20Template-2856f7" alt="Datalumina Project" />
-</a>
+Score free and low-cost couches for flipping with a **16ft enclosed trailer**. Generate Facebook Marketplace & Craigslist hunt links, estimate resale and profit, check trailer fit, and track inventory from pickup to sale.
 
-## Cookiecutter Data Science
-This project template is a simplified version of the [Cookiecutter Data Science](https://cookiecutter-data-science.drivendata.org) template, created to suit the needs of Datalumina and made available as a GitHub template.
+> Facebook does **not** offer a public Marketplace API. CouchHaul does **not** scrape Facebook. You open search links in your browser while logged in.
 
-## Adjusting .gitignore
-
-Ensure you adjust the `.gitignore` file according to your project needs. For example, since this is a template, the `/data/` folder is commented out and data will not be exlucded from source control:
-
-```plaintext
-# exclude data from source control by default
-# /data/
-```
-
-Typically, you want to exclude this folder if it contains either sensitive data that you do not want to add to version control or large files.
-
-## Duplicating the .env File
-To set up your environment variables, you need to duplicate the `.env.example` file and rename it to `.env`. You can do this manually or using the following terminal command:
+## Quick start
 
 ```bash
-cp .env.example .env # Linux, macOS, Git Bash, WSL
-copy .env.example .env # Windows Command Prompt
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env        # set COUCHHAUL_CITY to your area
+uvicorn src.app:app --reload --host 0.0.0.0 --port 8000
 ```
 
-This command creates a copy of `.env.example` and names it `.env`, allowing you to configure your environment variables specific to your setup.
+Open [http://localhost:8000](http://localhost:8000).
 
+## What it does
 
-## Project Organization
+| Tab | Purpose |
+|-----|---------|
+| **Score a deal** | Paste a listing → grade (A–F), est. profit, resale range, 16ft trailer fit |
+| **Hunt links** | One-click FB Marketplace + Craigslist searches for free / ≤$X couches |
+| **Inventory** | Pipeline: watching → contacted → picked up → listed → sold (+ realized profit) |
 
-```
-├── LICENSE            <- Open-source license if one is chosen
-├── README.md          <- The top-level README for developers using this project
-├── data
-│   ├── external       <- Data from third party sources
-│   ├── interim        <- Intermediate data that has been transformed
-│   ├── processed      <- The final, canonical data sets for modeling
-│   └── raw            <- The original, immutable data dump
-│
-├── models             <- Trained and serialized models, model predictions, or model summaries
-│
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`
-│
-├── references         <- Data dictionaries, manuals, and all other explanatory materials
-│
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
-│
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
-│
-└── src                         <- Source code for this project
-    │
-    ├── __init__.py             <- Makes src a Python module
-    │
-    ├── config.py               <- Store useful variables and configuration
-    │
-    ├── dataset.py              <- Scripts to download or generate data
-    │
-    ├── features.py             <- Code to create features for modeling
-    │
-    │    
-    ├── modeling                
-    │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
-    │
-    ├── plots.py                <- Code to create visualizations 
-    │
-    └── services                <- Service classes to connect with external platforms, tools, or APIs
-        └── __init__.py 
+### Trailer defaults (editable in code / API)
+
+16ft enclosed cargo assumptions:
+
+- Box: **192 × 78 × 78 in**
+- Rear door: **72 × 72 in**
+- Sectionals scored as modular pieces when possible
+
+### Scoring inputs that matter
+
+- Buy price (free is best)
+- Condition, material, brand hints
+- Dimensions (ask sellers for L×D×H)
+- Distance, gas, cleaning, labor
+- Pets/smoke and damage language in the description
+
+## API
+
+- `GET /api/health`
+- `GET /api/trailer`
+- `POST /api/score`
+- `POST /api/search-links` / `GET /api/search-links?location=...`
+- `GET|POST /api/inventory`
+- `PATCH|DELETE /api/inventory/{id}`
+
+## Tests
+
+```bash
+pytest -q
 ```
 
---------
+## Project layout
+
+```
+src/app.py              FastAPI entry
+src/couchflip/          Scoring, trailer fit, valuation, links, inventory
+static/                 Web UI
+data/raw/inventory.json Saved deals (created at runtime)
+tests/
+```
+
+## Flip playbook (short)
+
+1. Set your city → **Hunt** → open Newest free/cheap couch searches.
+2. Message fast; ask dimensions, smoke/pets, and whether sectionals separate.
+3. **Score** before you drive; skip F/D or no-fit unless you can break it down.
+4. Batch B+ pickups on one trailer run.
+5. Clean, photo in good light, list at the suggested ask, track in **Inventory**.
