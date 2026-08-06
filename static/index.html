@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CouchHaul — Flip free & low-cost couches</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <p class="brand-name">CouchHaul</p>
+        <p class="brand-tag">16ft enclosed · free & low-cost flips</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="score" type="button">Score a deal</button>
+      <button class="tab" data-tab="hunt" type="button">Hunt links</button>
+      <button class="tab" data-tab="inventory" type="button">Inventory</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="panel-score" class="panel active">
+      <div class="panel-head">
+        <h1>Will it flip?</h1>
+        <p>Paste a Marketplace find. We estimate resale, trailer fit, and profit after gas &amp; cleaning.</p>
+      </div>
+      <div class="split">
+        <form id="score-form" class="form-block">
+          <label>Title
+            <input name="title" required placeholder="Free sectional — moving this weekend" />
+          </label>
+          <label>Description
+            <textarea name="description" rows="4" placeholder="Leather, pet-free, 3-piece sectional, ~110&quot; along the wall…"></textarea>
+          </label>
+          <div class="row">
+            <label>Price ($)
+              <input name="price" type="number" min="0" step="1" value="0" />
+            </label>
+            <label class="check">
+              <input name="free" type="checkbox" checked /> Free listing
+            </label>
+          </div>
+          <div class="row">
+            <label>Type
+              <select name="couch_type">
+                <option value="unknown">Auto-detect</option>
+                <option value="sofa">Sofa</option>
+                <option value="sectional">Sectional</option>
+                <option value="loveseat">Loveseat</option>
+                <option value="sleeper">Sleeper</option>
+                <option value="recliner_sofa">Recliner sofa</option>
+                <option value="chaise">Chaise</option>
+              </select>
+            </label>
+            <label>Condition
+              <select name="condition">
+                <option value="unknown">Unknown</option>
+                <option value="excellent">Excellent</option>
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+                <option value="poor">Poor</option>
+              </select>
+            </label>
+            <label>Material
+              <select name="material">
+                <option value="unknown">Unknown</option>
+                <option value="leather">Leather</option>
+                <option value="faux_leather">Faux leather</option>
+                <option value="fabric">Fabric</option>
+                <option value="velvet">Velvet</option>
+                <option value="microfiber">Microfiber</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>Length (in)
+              <input name="length_in" type="number" min="0" step="1" placeholder="84" />
+            </label>
+            <label>Depth (in)
+              <input name="depth_in" type="number" min="0" step="1" placeholder="38" />
+            </label>
+            <label>Height (in)
+              <input name="height_in" type="number" min="0" step="1" placeholder="34" />
+            </label>
+          </div>
+          <div class="row">
+            <label>Distance (mi)
+              <input name="distance_miles" type="number" min="0" step="1" placeholder="12" />
+            </label>
+            <label>Brand hint
+              <input name="brand_hint" placeholder="West Elm, Ashley…" />
+            </label>
+            <label class="check">
+              <input name="pets_or_smoke" type="checkbox" /> Pets / smoke
+            </label>
+          </div>
+          <details class="costs">
+            <summary>Costs &amp; labor</summary>
+            <div class="row">
+              <label>Gas ($)
+                <input name="gas_cost" type="number" min="0" step="1" value="15" />
+              </label>
+              <label>Cleaning ($)
+                <input name="cleaning_cost" type="number" min="0" step="1" value="25" />
+              </label>
+              <label>Other ($)
+                <input name="other_cost" type="number" min="0" step="1" value="0" />
+              </label>
+            </div>
+            <div class="row">
+              <label>Labor hours
+                <input name="labor_hours" type="number" min="0" step="0.5" value="2" />
+              </label>
+              <label>Labor $/hr
+                <input name="labor_rate" type="number" min="0" step="1" value="20" />
+              </label>
+            </div>
+          </details>
+          <div class="actions">
+            <button type="submit" class="btn primary">Score deal</button>
+            <button type="button" class="btn ghost" id="save-to-inventory" disabled>Save to inventory</button>
+          </div>
+        </form>
+        <aside id="score-result" class="result empty">
+          <p class="muted">Results show up here — grade, profit, and whether it clears your trailer door.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="panel-hunt" class="panel">
+      <div class="panel-head">
+        <h1>Hunt</h1>
+        <p>Open ready-made Marketplace &amp; Craigslist searches. No scraping — you browse logged into FB.</p>
+      </div>
+      <form id="hunt-form" class="form-block hunt-form">
+        <div class="row">
+          <label>Your area
+            <input name="location" id="hunt-location" required placeholder="Austin, TX" />
+          </label>
+          <label>Max price ($)
+            <input name="max_price" type="number" min="0" value="75" />
+          </label>
+          <label>Radius (mi)
+            <input name="radius_miles" type="number" min="1" value="40" />
+          </label>
+          <label class="check">
+            <input name="free_only" type="checkbox" /> Free only
+          </label>
+        </div>
+        <button type="submit" class="btn primary">Generate links</button>
+      </form>
+      <div id="hunt-results" class="hunt-results"></div>
+    </section>
+
+    <section id="panel-inventory" class="panel">
+      <div class="panel-head">
+        <h1>Pipeline</h1>
+        <p>Track watching → pickup → list → sold. Capital tied up and realized profit update live.</p>
+      </div>
+      <div id="inventory-summary" class="stats"></div>
+      <div id="inventory-list" class="inv-list"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>CouchHaul is a local flip assistant. Facebook Marketplace has no public API — use Hunt links in your browser.</p>
+  </footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

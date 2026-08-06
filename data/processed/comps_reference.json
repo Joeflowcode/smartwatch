@@ -1,0 +1,37 @@
+[
+  {
+    "type": "sectional",
+    "condition": "good",
+    "material": "fabric",
+    "typical_resale_mid": 350,
+    "notes": "Local FB comps for clean 3-piece sectionals often $250–500"
+  },
+  {
+    "type": "sofa",
+    "condition": "good",
+    "material": "leather",
+    "typical_resale_mid": 260,
+    "notes": "Real leather sofas without damage"
+  },
+  {
+    "type": "sofa",
+    "condition": "good",
+    "material": "fabric",
+    "typical_resale_mid": 180,
+    "notes": "Standard 3-seat fabric sofa"
+  },
+  {
+    "type": "loveseat",
+    "condition": "good",
+    "material": "fabric",
+    "typical_resale_mid": 120,
+    "notes": "Often slower to move than full sofas"
+  },
+  {
+    "type": "sleeper",
+    "condition": "good",
+    "material": "fabric",
+    "typical_resale_mid": 200,
+    "notes": "Heavy; confirm mechanism works"
+  }
+]
