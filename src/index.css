@@ -147,6 +147,20 @@ h1 {
   color: var(--muted);
 }
 
+.banner.host {
+  background: #dce8d8;
+  color: var(--ink);
+}
+
+.banner.late {
+  background: #f3d4c4;
+  color: var(--ink);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -234,6 +248,10 @@ textarea {
 
 .toggle button {
   min-width: 4.8rem;
+}
+
+.field .ghost + .ghost {
+  margin-top: 0.4rem;
 }
 
 .section-head {

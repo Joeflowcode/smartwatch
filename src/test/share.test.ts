@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { CITY_PACKS, hydrateCityPack } from "../data";
 import { planRoute } from "../lib/route";
-import { buildShareSearch, formatRouteOneLiner, formatRouteText, parseShare, shareUrl } from "../lib/share";
+import {
+  buildShareSearch,
+  decodeList,
+  encodeList,
+  formatRouteOneLiner,
+  formatRouteText,
+  parseShare,
+  shareUrl,
+  shopperUrl,
+} from "../lib/share";
 import type { HuntQuery } from "../types";
 
 describe("share links", () => {
@@ -27,6 +36,40 @@ describe("share links", () => {
     expect(
       shareUrl("https://example.net", "/", { city: "Portland", zip: "97214" }),
     ).toBe("https://example.net/?city=Portland&zip=97214");
+  });
+
+  it("round-trips a pasted list in the hash for a shopper link", () => {
+    const list = "Lion Heart — 860 Salem Heights Ave S — Sat 9am–1pm LAST DAY";
+    expect(decodeList(encodeList(list))).toBe(list);
+
+    const result = shopperUrl("https://example.net", "/", {
+      city: "Salem",
+      zip: "97306",
+      windowStart: "2026-08-15",
+      windowEnd: "2026-08-16",
+      list,
+    });
+    expect("url" in result).toBe(true);
+    if (!("url" in result)) return;
+    expect(result.url).toContain("host=1");
+    expect(result.url).not.toContain("address=");
+    expect(result.url).toContain("#list=");
+
+    const parsed = parseShare(
+      result.url.slice(result.url.indexOf("?"), result.url.indexOf("#")),
+      result.url.slice(result.url.indexOf("#")),
+    );
+    expect(parsed.host).toBe(true);
+    expect(parsed.list).toBe(list);
+    expect(parsed.city).toBe("Salem");
+    expect(parsed.windowStart).toBe("2026-08-15");
+  });
+
+  it("refuses a shopper link with no list or feed", () => {
+    const result = shopperUrl("https://example.net", "/", { city: "Salem" });
+    expect(result).toEqual({
+      error: "Paste a sale list (or a feed URL) before copying a shopper link.",
+    });
   });
 });
 

@@ -31,6 +31,9 @@ interface HuntFormProps {
   onSelectPack: (packId: string) => void;
   onLocate: () => void;
   onThisWeekend: () => void;
+  onHuntNow: () => void;
+  onCopyShopperLink: () => void;
+  shopperStatus: string;
   onSubmit: () => void;
 }
 
@@ -131,6 +134,9 @@ export function HuntForm(props: HuntFormProps) {
           <span>&nbsp;</span>
           <button type="button" className="ghost" onClick={props.onThisWeekend}>
             This weekend
+          </button>
+          <button type="button" className="ghost" onClick={props.onHuntNow}>
+            Hunting now
           </button>
         </div>
       </div>
@@ -253,6 +259,17 @@ export function HuntForm(props: HuntFormProps) {
             </button>
           </div>
         ) : null}
+        <button
+          type="button"
+          className="secondary"
+          onClick={props.onCopyShopperLink}
+        >
+          {props.shopperStatus || "Copy shopper link"}
+        </button>
+        <p className="empty">
+          Sends your pasted list. Shoppers type their own driveway. No
+          account. Too long? Host JSON and use the feed URL below.
+        </p>
         <label className="field">
           <span>Optional feed URL</span>
           <input

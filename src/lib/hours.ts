@@ -15,11 +15,15 @@ export function formatClock(hhmm: string): string {
   return `${hour}:${String(mRaw).padStart(2, "0")}${suffix}`;
 }
 
-export function minutesToClock(total: number): string {
+export function clockToHhmm(total: number): string {
   const wrapped = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
   const hours = Math.floor(wrapped / 60);
   const minutes = wrapped % 60;
-  return formatClock(`${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`);
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+export function minutesToClock(total: number): string {
+  return formatClock(clockToHhmm(total));
 }
 
 export function formatDrive(minutes: number): string {

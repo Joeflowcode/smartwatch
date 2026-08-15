@@ -84,6 +84,9 @@ export interface RankedStop {
   timingNote?: string;
   missed?: boolean;
   leaveByLabel?: string;
+  driveMinutes?: number;
+  arriveMinutes?: number;
+  closeMinutes?: number;
 }
 
 export interface RoutePlan {
@@ -106,6 +109,7 @@ export interface HuntQuery {
   categories: CategoryId[];
   halfDay: boolean;
   departAt?: string;
+  sundayDepartAt?: string;
   excludeIds?: string[];
   feedUrl?: string;
 }

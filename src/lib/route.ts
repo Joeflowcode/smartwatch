@@ -381,6 +381,9 @@ function rankStops(
           ? "Tight on the close"
           : undefined,
       missed: timing?.missed,
+      driveMinutes: timing?.drive,
+      arriveMinutes: timing?.arrive,
+      closeMinutes: closeOn(sale, date) ? parseClock(closeOn(sale, date)!) : undefined,
     };
   });
 }
@@ -395,6 +398,7 @@ export function planRoute(
   const sunday = sundayOf(query.windowStart, query.windowEnd);
   const exclude = new Set(query.excludeIds ?? []);
   const departMinutes = parseClock(query.departAt ?? "09:00");
+  const sundayDepartMinutes = parseClock(query.sundayDepartAt ?? query.departAt ?? "09:00");
   const drive = createDriveFn(matrix);
 
   const inWindow = sales.filter((sale) =>
@@ -436,7 +440,7 @@ export function planRoute(
       sunday ?? saturday,
       query,
       saturday,
-      departMinutes,
+      sundayDepartMinutes,
       drive,
     ),
     skipped: rankStops(

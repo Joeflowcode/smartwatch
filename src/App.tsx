@@ -8,28 +8,38 @@ import { geocodeAddress } from "./lib/geocode";
 import { loadPrefs, savePrefs } from "./lib/prefs";
 import { fetchOsrmMatrix } from "./lib/osrm";
 import { planRoute } from "./lib/route";
-import { formatRouteText, parseShare, shareUrl } from "./lib/share";
-import { formatDateRange } from "./lib/hours";
-import { thisWeekend } from "./lib/weekend";
+import { formatRouteText, parseShare, shareUrl, shopperUrl } from "./lib/share";
+import { clockToHhmm, formatDateRange, minutesToClock, parseClock } from "./lib/hours";
+import {
+  activeRouteDate,
+  clockInZone,
+  effectiveDepartAt,
+  liveWarnings,
+  primaryWarning,
+  remainingSummary,
+} from "./lib/live";
+import { saturdayOf, sundayOf, thisWeekend } from "./lib/weekend";
 import type { CategoryId, HuntQuery, LatLng, RoutePlan, Sale } from "./types";
 
 const DEMO_START = CITY_PACKS[0].defaultStart;
 const weekend = thisWeekend();
 const saved = loadPrefs();
-const shared = typeof window === "undefined" ? {} : parseShare(window.location.search);
+const shared =
+  typeof window === "undefined" ? {} : parseShare(window.location.search, window.location.hash);
+const hostList = Boolean(shared.host || shared.list);
 
 export default function App() {
   const [address, setAddress] = useState(shared.address ?? saved.address ?? DEMO_START.label);
   const [city, setCity] = useState(shared.city ?? saved.city ?? "Salem");
   const [zip, setZip] = useState(shared.zip ?? saved.zip ?? "97306");
-  const [windowStart, setWindowStart] = useState(weekend.start);
-  const [windowEnd, setWindowEnd] = useState(weekend.end);
+  const [windowStart, setWindowStart] = useState(shared.windowStart ?? weekend.start);
+  const [windowEnd, setWindowEnd] = useState(shared.windowEnd ?? weekend.end);
   const [categories, setCategories] = useState<CategoryId[]>(
     shared.categories ?? saved.categories ?? [],
   );
   const [halfDay, setHalfDay] = useState(shared.halfDay ?? saved.halfDay ?? false);
   const [departAt, setDepartAt] = useState(shared.departAt ?? saved.departAt ?? "09:00");
-  const [pasted, setPasted] = useState(saved.pasted ?? "");
+  const [pasted, setPasted] = useState(shared.list ?? saved.pasted ?? "");
   const [feedUrl, setFeedUrl] = useState(shared.feedUrl ?? saved.feedUrl ?? "");
   const [locating, setLocating] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -37,11 +47,15 @@ export default function App() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+  const [shopperStatus, setShopperStatus] = useState("");
   const [plan, setPlan] = useState<RoutePlan | null>(null);
   const [feedNote, setFeedNote] = useState("");
   const [excludeIds, setExcludeIds] = useState<string[]>([]);
+  const [doneIds, setDoneIds] = useState<string[]>([]);
   const [here, setHere] = useState<(LatLng & { label: string }) | null>(null);
   const [salesCache, setSalesCache] = useState<Sale[]>([]);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  const [markingDone, setMarkingDone] = useState(false);
 
   const queryBase = useMemo(
     () => ({
@@ -62,11 +76,34 @@ export default function App() {
     savePrefs({ address, city, zip, categories, halfDay, departAt, pasted, feedUrl });
   }, [address, city, zip, categories, halfDay, departAt, pasted, feedUrl]);
 
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const activePack =
     findCityPackById(
       CITY_PACKS.find((pack) => city.toLowerCase().includes(pack.name.split(",")[0].toLowerCase()))
         ?.id ?? "",
     ) ?? CITY_PACKS[0];
+
+  const nowClock = clockInZone(new Date(nowTick), activePack.timezone);
+  const saturdayDate = saturdayOf(windowStart, windowEnd);
+  const sundayDate = sundayOf(windowStart, windowEnd);
+  const satDepart = effectiveDepartAt(departAt, nowClock, saturdayDate);
+  const sunDepart = sundayDate
+    ? effectiveDepartAt(departAt, nowClock, sundayDate)
+    : departAt;
+  const usingNow =
+    activeRouteDate(nowClock, windowStart, windowEnd) !== undefined &&
+    ((nowClock.date === saturdayDate && satDepart !== departAt) ||
+      (nowClock.date === sundayDate && sunDepart !== departAt));
+  const warning = plan
+    ? primaryWarning(liveWarnings(plan, nowClock, windowStart, windowEnd))
+    : undefined;
+  const remaining = plan
+    ? remainingSummary(plan, nowClock, windowStart, windowEnd)
+    : null;
 
   async function build(
     nextStart = here ?? {
@@ -100,6 +137,8 @@ export default function App() {
         excludeIds: nextExclude,
         start,
         startLabel: start.label,
+        departAt: satDepart,
+        sundayDepartAt: sunDepart,
       };
       const loaded = reuseSales
         ? { sales: reuseSales, note: plan?.sourceNote ?? "Using the current list." }
@@ -195,11 +234,81 @@ export default function App() {
   function resetProgress() {
     setHere(null);
     setExcludeIds([]);
+    setDoneIds([]);
     void build({
       label: address,
       lat: activePack.defaultStart.lat,
       lng: activePack.defaultStart.lng,
     }, [], salesCache);
+  }
+
+  function huntNow() {
+    setDepartAt(clockToHhmm(clockInZone(new Date(), activePack.timezone).minutes));
+    setNowTick(Date.now());
+  }
+
+  function startFromStop(id: string, nextExclude: string[]) {
+    const stop =
+      plan?.saturday.find((item) => item.sale.id === id) ??
+      plan?.sunday.find((item) => item.sale.id === id);
+    if (!stop) return;
+    const nextHere = {
+      lat: stop.sale.lat,
+      lng: stop.sale.lng,
+      label: stop.sale.address,
+    };
+    setHere(nextHere);
+    void build(nextHere, nextExclude, salesCache);
+  }
+
+  function markDone(id: string) {
+    const nextExclude = [...new Set([...excludeIds, id])];
+    setExcludeIds(nextExclude);
+    setDoneIds((current) => [...new Set([...current, id])]);
+    if (!navigator.geolocation) {
+      startFromStop(id, nextExclude);
+      return;
+    }
+    setMarkingDone(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextHere = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          label: "Where you are",
+        };
+        setHere(nextHere);
+        setMarkingDone(false);
+        void build(nextHere, nextExclude, salesCache);
+      },
+      () => {
+        setMarkingDone(false);
+        startFromStop(id, nextExclude);
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }
+
+  async function copyShopperLink() {
+    const result = shopperUrl(window.location.origin, window.location.pathname, {
+      city,
+      zip,
+      windowStart,
+      windowEnd,
+      feedUrl,
+      list: pasted,
+    });
+    if ("error" in result) {
+      setError(result.error);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(result.url);
+      setShopperStatus("Shopper link copied");
+      window.setTimeout(() => setShopperStatus(""), 2000);
+    } catch {
+      setError("Could not copy the shopper link.");
+    }
   }
 
   function huntShareUrl() {
@@ -211,6 +320,8 @@ export default function App() {
       halfDay,
       departAt,
       feedUrl,
+      windowStart,
+      windowEnd,
     });
   }
 
@@ -263,10 +374,17 @@ export default function App() {
         </p>
       </header>
 
-      <p className="banner">
-        Demo seed is on. Live national directories are not scraped. Paste a
-        list, read a photo, or point at a JSON feed you host.
-      </p>
+      {hostList ? (
+        <p className="banner host">
+          A host shared this weekend&apos;s list. Enter your driveway and tap
+          Build route. This is their list, not a live directory.
+        </p>
+      ) : (
+        <p className="banner">
+          Demo seed is on. Live national directories are not scraped. Paste a
+          list, read a photo, or point at a JSON feed you host.
+        </p>
+      )}
 
       <HuntForm
         address={address}
@@ -300,9 +418,13 @@ export default function App() {
           setWindowStart(next.start);
           setWindowEnd(next.end);
         }}
+        onHuntNow={huntNow}
+        onCopyShopperLink={() => void copyShopperLink()}
+        shopperStatus={shopperStatus}
         onSubmit={() => {
           setHere(null);
           setExcludeIds([]);
+          setDoneIds([]);
           void build({
             label: address,
             lat: activePack.defaultStart.lat,
@@ -325,10 +447,35 @@ export default function App() {
               ? "Drive times are road minutes from OpenStreetMap/OSRM."
               : "Drive times are a crow-flies estimate. OSRM was unavailable."}
           </p>
+          {usingNow ? (
+            <p className="banner">
+              Using {minutesToClock(parseClock(nowClock.date === sundayDate ? sunDepart : satDepart))}{" "}
+              (now) instead of your leave-at time.
+            </p>
+          ) : null}
+          {remaining ? <p className="banner">{remaining}</p> : null}
+          {warning ? (
+            <div className={`banner late late-${warning.kind}`}>
+              <span>{warning.message}</span>
+              <button
+                type="button"
+                className="text-btn"
+                onClick={() => skipStop(warning.stopId)}
+              >
+                Skip {warning.name}
+              </button>
+            </div>
+          ) : null}
+          {markingDone ? <p className="banner">Finding where you are…</p> : null}
           {here || excludeIds.length > 0 ? (
             <div className="banner progress">
               {here ? `Starting from ${here.label}. ` : ""}
-              {excludeIds.length > 0 ? `${excludeIds.length} stop${excludeIds.length === 1 ? "" : "s"} dropped. ` : ""}
+              {doneIds.length > 0
+                ? `${doneIds.length} done. `
+                : null}
+              {excludeIds.length - doneIds.length > 0
+                ? `${excludeIds.length - doneIds.length} skipped. `
+                : null}
               <button type="button" className="text-btn" onClick={resetProgress}>
                 Reset progress
               </button>
@@ -343,6 +490,7 @@ export default function App() {
                 stop={stop}
                 onSkip={skipStop}
                 onStartHere={startHere}
+                onDone={markDone}
               />
             ))
           )}
@@ -370,6 +518,7 @@ export default function App() {
                   kind="sunday"
                   onSkip={skipStop}
                   onStartHere={startHere}
+                  onDone={markDone}
                 />
               ))}
             </>
@@ -383,6 +532,14 @@ export default function App() {
               {copied ? "Link copied" : "Copy link"}
             </button>
           </div>
+          <button
+            type="button"
+            className="secondary"
+            style={{ width: "100%", marginBottom: "1rem" }}
+            onClick={() => void copyShopperLink()}
+          >
+            {shopperStatus || "Copy shopper link"}
+          </button>
 
           <details className="details card">
             <summary>Demo vs live data</summary>

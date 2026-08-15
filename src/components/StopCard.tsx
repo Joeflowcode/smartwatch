@@ -5,6 +5,7 @@ interface StopCardProps {
   kind?: "saturday" | "sunday" | "skipped";
   onSkip?: (id: string) => void;
   onStartHere?: (id: string) => void;
+  onDone?: (id: string) => void;
 }
 
 export function StopCard({
@@ -12,6 +13,7 @@ export function StopCard({
   kind = "saturday",
   onSkip,
   onStartHere,
+  onDone,
 }: StopCardProps) {
   const roleClass =
     kind === "skipped" ? "skip" : kind === "sunday" ? "sunday" : stop.role;
@@ -58,19 +60,26 @@ export function StopCard({
       <a className="secondary-link" href={stop.mapsUrl} target="_blank" rel="noreferrer">
         Open in Maps
       </a>
-      {kind !== "skipped" && (onSkip || onStartHere) ? (
-        <div className="stop-actions">
-          {onStartHere ? (
-            <button type="button" className="ghost" onClick={() => onStartHere(stop.sale.id)}>
-              Start here
+      {kind !== "skipped" && (onSkip || onStartHere || onDone) ? (
+        <>
+          {onDone ? (
+            <button type="button" onClick={() => onDone(stop.sale.id)}>
+              Done — next from here
             </button>
           ) : null}
-          {onSkip ? (
-            <button type="button" className="ghost" onClick={() => onSkip(stop.sale.id)}>
-              Skip
-            </button>
-          ) : null}
-        </div>
+          <div className="stop-actions">
+            {onStartHere ? (
+              <button type="button" className="ghost" onClick={() => onStartHere(stop.sale.id)}>
+                Start here
+              </button>
+            ) : null}
+            {onSkip ? (
+              <button type="button" className="ghost" onClick={() => onSkip(stop.sale.id)}>
+                Skip
+              </button>
+            ) : null}
+          </div>
+        </>
       ) : null}
     </article>
   );
