@@ -45,9 +45,14 @@ export function licensedFeedAdapter(feedUrl?: string): SaleAdapter {
       try {
         const text = await readFeed(url);
         const weekend = weekendDates(query.windowStart, query.windowEnd);
-        const sales: Sale[] = (await parseUserSalesAsync(text, weekend)).map(
-          (sale) => ({ ...sale, source: "licensed-feed" as const }),
-        );
+        const parsed = await parseUserSalesAsync(text, weekend, {
+          city: query.city,
+          zip: query.zip,
+        });
+        const sales: Sale[] = parsed.sales.map((sale) => ({
+          ...sale,
+          source: "licensed-feed" as const,
+        }));
         return {
           sales,
           source: "licensed-feed",

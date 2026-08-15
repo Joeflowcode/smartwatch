@@ -14,8 +14,15 @@ export interface LooseSale {
   hours?: SaleHours[] | string;
 }
 
-const ADDRESS =
-  /\d{1,6}\s+[^,\n]+,\s*[^,\n]+,\s*[A-Z]{2}\s*\d{5}/i;
+const FULL_ADDRESS =
+  /\d{1,6}\s+[^,\n]+,\s*[^,\n]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?/i;
+
+const STREET =
+  /\d{1,6}\s+[A-Za-z0-9 .#'-]+?\s+(?:Street|St|Avenue|Ave|Drive|Dr|Road|Rd|Court|Ct|Lane|Ln|Way|Boulevard|Blvd|Place|Pl|Terrace|Ter|Circle|Cir|Highway|Hwy|Parkway|Pkwy)\.?(?:\s+(?:N|S|E|W|NE|NW|SE|SW))?/i;
+
+function cleanAddress(value: string): string {
+  return value.replace(/\s+/g, " ").replace(/[|—–]+$/g, "").trim();
+}
 
 export function looksLikeJson(text: string): boolean {
   const trimmed = text.trim();
@@ -23,8 +30,11 @@ export function looksLikeJson(text: string): boolean {
 }
 
 export function extractAddress(text: string): string | undefined {
-  const match = text.match(ADDRESS);
-  return match?.[0]?.replace(/\s+/g, " ").trim();
+  const full = text.match(FULL_ADDRESS)?.[0];
+  if (full) return cleanAddress(full);
+  const street = text.match(STREET)?.[0];
+  if (street) return cleanAddress(street);
+  return undefined;
 }
 
 function splitParts(line: string): string[] {
@@ -43,9 +53,9 @@ function parseBlock(block: string, weekend: string[]): LooseSale | null {
 
   const lastDay = /last\s*day/i.test(block);
   const hours = parsePastedHours(block, weekend);
-
-  const before = block.slice(0, block.search(ADDRESS)).trim();
-  const after = block.slice(block.search(ADDRESS) + address.length).trim();
+  const at = block.toLowerCase().indexOf(address.toLowerCase());
+  const before = at >= 0 ? block.slice(0, at).trim() : "";
+  const after = at >= 0 ? block.slice(at + address.length).trim() : "";
 
   let name = splitParts(before)[0] || before.split("\n")[0]?.trim() || "";
   name = name.replace(/[,:]+$/, "").trim();
@@ -56,7 +66,7 @@ function parseBlock(block: string, weekend: string[]): LooseSale | null {
     .filter(
       (part) =>
         part &&
-        !ADDRESS.test(part) &&
+        !extractAddress(part) &&
         !/^(sat|sun|last\s*day)/i.test(part) &&
         !/^\d{1,2}(?::\d{2})?\s*(am|pm)/i.test(part),
     );
@@ -64,11 +74,11 @@ function parseBlock(block: string, weekend: string[]): LooseSale | null {
 
   if (!name) {
     const firstLine = block.split("\n")[0]?.trim() ?? "";
-    name = ADDRESS.test(firstLine) ? address : firstLine;
+    name = extractAddress(firstLine) ? address : firstLine;
   }
 
   const zip = address.match(/\b(\d{5})\b/)?.[1];
-  const cityState = address.match(/,\s*([^,]+),\s*([A-Z]{2})\s+\d{5}/i);
+  const cityState = address.match(/,\s*([^,]+),\s*([A-Z]{2})(?:\s+\d{5})?/i);
 
   return {
     name,

@@ -167,16 +167,16 @@ export function HuntForm(props: HuntFormProps) {
       <details className="details">
         <summary>Paste or upload a sale list</summary>
         <p className="empty">
-          Paste messy notes or JSON. A name, US address, and Sat/Sun hours
-          are enough — coordinates are filled from the seed or the Census
-          geocoder. This is your list, not a live scrape.
+          Paste messy notes or JSON. A name, a US street, and Sat/Sun hours
+          are enough. Missing city or ZIP come from the form. Pins come from
+          the city seed or the Census geocoder — not a live scrape.
         </p>
         <label className="field">
           <span>Pasted sales</span>
           <textarea
             value={props.pasted}
             onChange={(event) => props.onPasted(event.target.value)}
-            placeholder={"Lion Heart — 860 Salem Heights Ave S, Salem, OR 97302 — Sat 9am–1pm LAST DAY — antiques\n\nIndependence Pickin Sale\n115 S 6th St, Independence, OR 97351\nSat 9am-12pm LAST DAY"}
+            placeholder={"Lion Heart — 860 Salem Heights Ave S — Sat 9am–1pm LAST DAY — antiques\n\nIndependence Pickin Sale\n115 S 6th St, Independence, OR 97351\nSat 9am-12pm LAST DAY"}
           />
         </label>
         <label className="file-btn">

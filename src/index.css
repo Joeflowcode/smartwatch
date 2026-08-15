@@ -312,10 +312,15 @@ textarea {
   color: var(--last);
 }
 
-.stop-actions {
+.stop-actions,
+.share-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
+}
+
+.share-row {
+  margin: 0.85rem 0 1rem;
 }
 
 .progress {

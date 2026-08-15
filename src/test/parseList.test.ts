@@ -37,6 +37,30 @@ describe("messy sale list", () => {
     expect(sales[2]?.tags.map((tag) => tag.id)).toContain("jewelry");
   });
 
+  it("pins a street-only line from the Salem seed", () => {
+    const sales = parseUserSales(
+      "Lion Heart\n860 Salem Heights Ave S\nSat 9am-1pm LAST DAY — antiques",
+      weekend,
+    );
+    expect(sales).toHaveLength(1);
+    expect(sales[0]?.lat).toBeCloseTo(44.908, 3);
+    expect(sales[0]?.address).toMatch(/Salem Heights/i);
+  });
+
+  it("accepts a full address that omits the ZIP", () => {
+    const rows = parseMessySales(
+      "Yard sale — 4182 Barrett St S, Salem, OR — Sat 9am-3pm — electronics",
+      weekend,
+    );
+    expect(rows[0]?.address).toBe("4182 Barrett St S, Salem, OR");
+    const sales = parseUserSales(
+      "Yard sale — 4182 Barrett St S, Salem, OR — Sat 9am-3pm — electronics",
+      weekend,
+    );
+    expect(sales[0]?.name).toBe("Yard sale");
+    expect(sales[0]?.lat).toBeCloseTo(44.8955, 3);
+  });
+
   it("accepts JSON that omits lat/lng when the address is in the seed", () => {
     const sales = parseUserSales(
       JSON.stringify([

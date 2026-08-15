@@ -1,4 +1,4 @@
-import { CATEGORIES, type CategoryId } from "../types";
+import { CATEGORIES, type CategoryId, type RankedStop, type RoutePlan } from "../types";
 
 export interface ShareState {
   address?: string;
@@ -45,4 +45,54 @@ export function buildShareSearch(state: ShareState): string {
 
 export function shareUrl(origin: string, pathname: string, state: ShareState): string {
   return `${origin}${pathname}${buildShareSearch(state)}`;
+}
+
+function clockOf(stop: RankedStop): string {
+  return (stop.arriveLabel ?? "").replace(/^Arrive\s+/i, "").trim();
+}
+
+function lineFor(stop: RankedStop): string {
+  const clock = clockOf(stop);
+  return clock ? `${stop.sale.name} ${clock}` : stop.sale.name;
+}
+
+export function formatRouteOneLiner(plan: RoutePlan): string {
+  return plan.saturday
+    .map((stop) => `${stop.role.toUpperCase()} ${lineFor(stop)}`)
+    .join(" · ");
+}
+
+export function formatRouteText(
+  plan: RoutePlan,
+  options: { startLabel?: string; url?: string } = {},
+): string {
+  const lines: string[] = [];
+  const oneLiner = formatRouteOneLiner(plan);
+  if (oneLiner) lines.push(oneLiner);
+
+  if (options.startLabel) {
+    lines.push(`From ${options.startLabel}`);
+  }
+
+  for (const stop of plan.saturday) {
+    const clock = clockOf(stop);
+    const when = clock ? ` · ${clock}` : "";
+    lines.push(`${stop.role.toUpperCase()} ${stop.sale.name}${when}`);
+    lines.push(stop.sale.address);
+  }
+
+  if (plan.sunday.length > 0) {
+    lines.push("");
+    lines.push("Sunday leftover");
+    for (const stop of plan.sunday) {
+      lines.push(`${stop.sale.name} · ${stop.sale.address}`);
+    }
+  }
+
+  if (options.url) {
+    lines.push("");
+    lines.push(options.url);
+  }
+
+  return lines.join("\n").trim();
 }

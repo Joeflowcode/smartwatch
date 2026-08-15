@@ -8,7 +8,7 @@ import { geocodeAddress } from "./lib/geocode";
 import { loadPrefs, savePrefs } from "./lib/prefs";
 import { fetchOsrmMatrix } from "./lib/osrm";
 import { planRoute } from "./lib/route";
-import { parseShare, shareUrl } from "./lib/share";
+import { formatRouteText, parseShare, shareUrl } from "./lib/share";
 import { formatDateRange } from "./lib/hours";
 import { thisWeekend } from "./lib/weekend";
 import type { CategoryId, HuntQuery, LatLng, RoutePlan, Sale } from "./types";
@@ -36,6 +36,7 @@ export default function App() {
   const [readingPhoto, setReadingPhoto] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
   const [plan, setPlan] = useState<RoutePlan | null>(null);
   const [feedNote, setFeedNote] = useState("");
   const [excludeIds, setExcludeIds] = useState<string[]>([]);
@@ -201,8 +202,8 @@ export default function App() {
     }, [], salesCache);
   }
 
-  async function copyShare() {
-    const url = shareUrl(window.location.origin, window.location.pathname, {
+  function huntShareUrl() {
+    return shareUrl(window.location.origin, window.location.pathname, {
       address,
       city,
       zip,
@@ -211,12 +212,44 @@ export default function App() {
       departAt,
       feedUrl,
     });
+  }
+
+  async function copyShare() {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(huntShareUrl());
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       setError("Could not copy the share link.");
+    }
+  }
+
+  async function shareRoute() {
+    if (!plan) return;
+    const url = huntShareUrl();
+    const text = formatRouteText(plan, {
+      startLabel: here?.label ?? address,
+      url,
+    });
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: "Weekend sale route", text });
+        setShareStatus("Shared");
+        window.setTimeout(() => setShareStatus(""), 2000);
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      setShareStatus("Route copied");
+      window.setTimeout(() => setShareStatus(""), 2000);
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      try {
+        await navigator.clipboard.writeText(text);
+        setShareStatus("Route copied");
+        window.setTimeout(() => setShareStatus(""), 2000);
+      } catch {
+        setError("Could not share that route.");
+      }
     }
   }
 
@@ -342,9 +375,14 @@ export default function App() {
             </>
           ) : null}
 
-          <button type="button" className="secondary" style={{ width: "100%" }} onClick={() => void copyShare()}>
-            {copied ? "Link copied" : "Copy share link"}
-          </button>
+          <div className="share-row">
+            <button type="button" onClick={() => void shareRoute()}>
+              {shareStatus || "Share as text"}
+            </button>
+            <button type="button" className="secondary" onClick={() => void copyShare()}>
+              {copied ? "Link copied" : "Copy link"}
+            </button>
+          </div>
 
           <details className="details card">
             <summary>Demo vs live data</summary>

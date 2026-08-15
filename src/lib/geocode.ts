@@ -1,5 +1,47 @@
 import type { LatLng } from "../types";
-import { CITY_PACKS } from "../data";
+import { CITY_PACKS, findCityPack } from "../data";
+
+export interface AddressHint {
+  city?: string;
+  state?: string;
+  zip?: string;
+}
+
+export function inferState(city?: string, zip?: string): string | undefined {
+  return findCityPack(city, zip)?.state;
+}
+
+export function hintFromHunt(city?: string, zip?: string): AddressHint {
+  return {
+    city: city?.trim() || undefined,
+    zip: zip?.trim() || undefined,
+    state: inferState(city, zip),
+  };
+}
+
+function escapeRe(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function completeAddress(address: string, hint: AddressHint = {}): string {
+  const compact = address.replace(/\s+/g, " ").trim();
+  if (!compact) return compact;
+
+  const hasZip = /\b\d{5}(?:-\d{4})?\b/.test(compact);
+  const hasState = /,\s*[A-Z]{2}\b/i.test(compact) || /\s[A-Z]{2}\s+\d{5}/i.test(compact);
+  const city = hint.city?.trim();
+  const state = hint.state?.trim().toUpperCase();
+  const zip = hint.zip?.trim();
+  const hasCity = city
+    ? new RegExp(`\\b${escapeRe(city)}\\b`, "i").test(compact)
+    : false;
+
+  let next = compact;
+  if (city && !hasCity) next += `, ${city}`;
+  if (state && !hasState) next += `, ${state}`;
+  if (zip && !hasZip) next += ` ${zip}`;
+  return next.replace(/\s*,\s*,/g, ",").replace(/\s+/g, " ").trim();
+}
 
 export function normalizeAddress(value: string): string {
   return value
@@ -28,7 +70,11 @@ export function knownPoint(address: string): (LatLng & { label: string }) | null
       return { ...pack.defaultStart };
     }
     for (const sale of pack.sales) {
-      if (normalizeAddress(sale.address) === needle) {
+      const saleNorm = normalizeAddress(sale.address);
+      if (saleNorm === needle) {
+        return { lat: sale.lat, lng: sale.lng, label: sale.address };
+      }
+      if (needle.length >= 8 && saleNorm.startsWith(`${needle} `)) {
         return { lat: sale.lat, lng: sale.lng, label: sale.address };
       }
     }
