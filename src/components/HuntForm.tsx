@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { CITY_PACKS } from "../data";
+import { isImageFile, readSalePhoto } from "../lib/ocr";
 import { CATEGORIES, type CategoryId } from "../types";
 
 interface HuntFormProps {
@@ -8,9 +11,12 @@ interface HuntFormProps {
   windowEnd: string;
   categories: CategoryId[];
   halfDay: boolean;
+  departAt: string;
   pasted: string;
+  feedUrl: string;
   locating: boolean;
   busy: boolean;
+  readingPhoto: boolean;
   onAddress: (value: string) => void;
   onCity: (value: string) => void;
   onZip: (value: string) => void;
@@ -18,13 +24,23 @@ interface HuntFormProps {
   onWindowEnd: (value: string) => void;
   onToggleCategory: (id: CategoryId) => void;
   onHalfDay: (value: boolean) => void;
+  onDepartAt: (value: string) => void;
   onPasted: (value: string) => void;
+  onFeedUrl: (value: string) => void;
+  onReadingPhoto: (value: boolean) => void;
+  onSelectPack: (packId: string) => void;
   onLocate: () => void;
   onThisWeekend: () => void;
+  onHuntNow: () => void;
+  onCopyShopperLink: () => void;
+  shopperStatus: string;
   onSubmit: () => void;
 }
 
 export function HuntForm(props: HuntFormProps) {
+  const [ocrDraft, setOcrDraft] = useState<string | null>(null);
+  const [ocrError, setOcrError] = useState("");
+
   return (
     <form
       className="card"
@@ -48,6 +64,23 @@ export function HuntForm(props: HuntFormProps) {
         <button type="button" className="secondary" onClick={props.onLocate} disabled={props.locating}>
           {props.locating ? "Finding you…" : "Use my location"}
         </button>
+      </div>
+      <p className="section-label" style={{ margin: "0.85rem 0 0.55rem" }}>
+        City pack
+      </p>
+      <div className="chips">
+        {CITY_PACKS.map((pack) => (
+          <button
+            key={pack.id}
+            type="button"
+            className="chip"
+            aria-pressed={props.city.toLowerCase().includes(pack.name.split(",")[0].toLowerCase())}
+            onClick={() => props.onSelectPack(pack.id)}
+          >
+            {pack.name}
+            {pack.kind === "example" ? " · examples" : ""}
+          </button>
+        ))}
       </div>
       <div className="row">
         <label className="field">
@@ -88,9 +121,25 @@ export function HuntForm(props: HuntFormProps) {
           />
         </label>
       </div>
-      <button type="button" className="ghost" onClick={props.onThisWeekend}>
-        This weekend
-      </button>
+      <div className="row">
+        <label className="field">
+          <span>Leave at</span>
+          <input
+            type="time"
+            value={props.departAt}
+            onChange={(event) => props.onDepartAt(event.target.value)}
+          />
+        </label>
+        <div className="field">
+          <span>&nbsp;</span>
+          <button type="button" className="ghost" onClick={props.onThisWeekend}>
+            This weekend
+          </button>
+          <button type="button" className="ghost" onClick={props.onHuntNow}>
+            Hunting now
+          </button>
+        </div>
+      </div>
       <p className="section-label" style={{ margin: "1rem 0 0.55rem" }}>
         Hunt list
       </p>
@@ -124,29 +173,118 @@ export function HuntForm(props: HuntFormProps) {
       <details className="details">
         <summary>Paste or upload a sale list</summary>
         <p className="empty">
-          JSON array with name, address, lat, lng, hours, and description.
-          Inferred tags are marked. This is your list — not a live scrape.
+          Paste messy notes or JSON. A name, a US street, and Sat/Sun hours
+          are enough. Missing city or ZIP come from the form. Pins come from
+          the city seed or the Census geocoder — not a live scrape.
         </p>
         <label className="field">
-          <span>Pasted JSON</span>
+          <span>Pasted sales</span>
           <textarea
             value={props.pasted}
             onChange={(event) => props.onPasted(event.target.value)}
-            placeholder='[{"name":"Example","address":"...","lat":44.9,"lng":-123.0,"hours":[{"date":"2026-08-15","open":"09:00","close":"14:00"}],"description":"tools"}]'
+            placeholder={"Lion Heart — 860 Salem Heights Ave S — Sat 9am–1pm LAST DAY — antiques\n\nIndependence Pickin Sale\n115 S 6th St, Independence, OR 97351\nSat 9am-12pm LAST DAY"}
           />
         </label>
         <label className="file-btn">
-          Upload JSON
+          Upload JSON, text, or photo
           <input
             type="file"
-            accept="application/json,.json"
+            accept="application/json,.json,.txt,text/plain,image/*"
             onChange={async (event) => {
               const file = event.target.files?.[0];
               if (!file) return;
+              if (isImageFile(file)) {
+                props.onReadingPhoto(true);
+                setOcrError("");
+                try {
+                  const text = await readSalePhoto(file);
+                  if (!text) throw new Error("empty");
+                  setOcrDraft(text);
+                } catch {
+                  setOcrDraft(null);
+                  setOcrError(
+                    "Could not read that photo. Fix the text by hand, or paste the list.",
+                  );
+                } finally {
+                  props.onReadingPhoto(false);
+                  event.target.value = "";
+                }
+                return;
+              }
               props.onPasted(await file.text());
             }}
           />
         </label>
+        {props.readingPhoto ? <p className="empty">Reading photo…</p> : null}
+        {ocrError ? <p className="error">{ocrError}</p> : null}
+        {ocrDraft !== null ? (
+          <div className="ocr-review">
+            <p className="section-label">Check the photo text</p>
+            <p className="empty">
+              OCR guesses. Fix addresses before they become stops.
+            </p>
+            <textarea
+              value={ocrDraft}
+              onChange={(event) => setOcrDraft(event.target.value)}
+            />
+            <div className="stop-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  props.onPasted(
+                    props.pasted ? `${props.pasted}\n\n${ocrDraft}` : ocrDraft,
+                  );
+                  setOcrDraft(null);
+                }}
+              >
+                Add to list
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  props.onPasted(ocrDraft);
+                  setOcrDraft(null);
+                }}
+              >
+                Replace list
+              </button>
+            </div>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => setOcrDraft(null)}
+            >
+              Discard
+            </button>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          className="secondary"
+          onClick={props.onCopyShopperLink}
+        >
+          {props.shopperStatus || "Copy shopper link"}
+        </button>
+        <p className="empty">
+          Sends your pasted list. Shoppers type their own driveway. No
+          account. Too long? Host JSON and use the feed URL below.
+        </p>
+        <label className="field">
+          <span>Optional feed URL</span>
+          <input
+            type="text"
+            inputMode="url"
+            value={props.feedUrl}
+            onChange={(event) => props.onFeedUrl(event.target.value)}
+            placeholder="/feeds/example.json"
+          />
+        </label>
+        <p className="empty">
+          Leave this blank to look up a licensed feed by ZIP. Nothing is
+          connected yet — that needs a partner URL in Netlify env, not a
+          scrape.
+        </p>
       </details>
       <div className="actions" style={{ marginTop: "0.9rem" }}>
         <button type="submit" disabled={props.busy}>

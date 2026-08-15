@@ -1,0 +1,92 @@
+{
+  "id": "portland-or",
+  "name": "Portland, OR",
+  "state": "OR",
+  "kind": "example",
+  "zips": [
+    "97201",
+    "97202",
+    "97203",
+    "97209",
+    "97211",
+    "97214",
+    "97232"
+  ],
+  "timezone": "America/Los_Angeles",
+  "dataNote": "Labeled examples on real Portland streets. These are not this weekend’s real estate sales. Use them to try a second city pack.",
+  "defaultStart": {
+    "label": "1740 SE 36th Ave, Portland, OR 97214",
+    "lat": 45.510487,
+    "lng": -122.62657
+  },
+  "sales": [
+    {
+      "id": "pdx-lombard-example",
+      "name": "Example — St Johns noon close",
+      "address": "7035 N Lombard St, Portland, OR 97203",
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97203",
+      "lat": 45.587266,
+      "lng": -122.739544,
+      "lastDay": true,
+      "description": "Labeled example. Electronics and tools. Not a real sale.",
+      "hours": [{ "date": "2026-08-15", "open": "09:00", "close": "12:00" }]
+    },
+    {
+      "id": "pdx-hawthorne-example",
+      "name": "Example — Hawthorne vintage",
+      "address": "3550 SE Hawthorne Blvd, Portland, OR 97214",
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97214",
+      "lat": 45.512001,
+      "lng": -122.627766,
+      "lastDay": true,
+      "description": "Labeled example. Vintage clothing and records. Not a real sale.",
+      "hours": [{ "date": "2026-08-15", "open": "09:00", "close": "13:00" }]
+    },
+    {
+      "id": "pdx-28th-example",
+      "name": "Example — 28th tools",
+      "address": "401 NE 28th Ave, Portland, OR 97232",
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97232",
+      "lat": 45.525788,
+      "lng": -122.637293,
+      "lastDay": false,
+      "description": "Labeled example. Tools and cameras. Not a real sale.",
+      "hours": [
+        { "date": "2026-08-15", "open": "09:00", "close": "17:00" },
+        { "date": "2026-08-16", "open": "09:00", "close": "15:00" }
+      ]
+    },
+    {
+      "id": "pdx-alberta-example",
+      "name": "Example — Alberta games",
+      "address": "2207 NE Alberta St, Portland, OR 97211",
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97211",
+      "lat": 45.559123,
+      "lng": -122.642751,
+      "lastDay": true,
+      "description": "Labeled example. Games and consoles. Not a real sale.",
+      "hours": [{ "date": "2026-08-15", "open": "09:00", "close": "17:00" }]
+    },
+    {
+      "id": "pdx-hoyt-example",
+      "name": "Example — Pearl leftover",
+      "address": "1231 NW Hoyt St, Portland, OR 97209",
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97209",
+      "lat": 45.527266,
+      "lng": -122.683626,
+      "lastDay": false,
+      "description": "Labeled example. Jewelry. Sunday-only leftover. Not a real sale.",
+      "hours": [{ "date": "2026-08-16", "open": "09:00", "close": "15:00" }]
+    }
+  ]
+}

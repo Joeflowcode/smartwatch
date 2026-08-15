@@ -5,28 +5,35 @@ import { userAdapter } from "./user";
 
 export { demoAdapter } from "./demo";
 export { licensedFeedAdapter } from "./licensed";
-export { userAdapter, parseUserSales } from "./user";
+export { userAdapter, parseUserSales, parseUserSalesAsync } from "./user";
 
 export async function loadSales(
   query: HuntQuery,
   pasted?: string,
+  feedUrl?: string,
 ): Promise<AdapterResult> {
-  const licensed = await licensedFeedAdapter.load(query);
+  const licensed = await licensedFeedAdapter(feedUrl ?? query.feedUrl).load(query);
   if (licensed.sales.length > 0) return licensed;
 
   if (pasted?.trim()) {
     const user = await userAdapter(pasted).load(query);
-    if (user.sales.length > 0) return user;
-    if (pasted.trim()) {
-      const demo = await demoAdapter.load(query);
-      return {
-        ...demo,
-        note: `${user.note} Falling back to demo seed. ${demo.note}`,
-      };
+    if (user.sales.length > 0) {
+      return licensed.note.startsWith("Licensed live feed is not connected")
+        ? user
+        : { ...user, note: `${licensed.note} ${user.note}` };
     }
+    const demo = await demoAdapter.load(query);
+    return {
+      ...demo,
+      note: `${user.note} Falling back to demo seed. ${demo.note}`,
+    };
   }
 
-  return demoAdapter.load(query);
+  const demo = await demoAdapter.load(query);
+  if (feedUrl ?? query.feedUrl) {
+    return { ...demo, note: `${licensed.note} ${demo.note}` };
+  }
+  return demo;
 }
 
 export function mergeSales(results: AdapterResult[]): Sale[] {

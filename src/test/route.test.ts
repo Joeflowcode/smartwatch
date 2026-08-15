@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hydrateCityPack, CITY_PACKS } from "../data";
-import { partitionSales, planRoute, orderSaturday } from "../lib/route";
+import { partitionSales, planRoute, orderSaturday, timeStops } from "../lib/route";
 import type { HuntQuery } from "../types";
 
 const pack = CITY_PACKS[0];
@@ -79,5 +79,44 @@ describe("Salem Aug 15–16 2026 seed", () => {
     expect(plan.mapsUrl).toContain("waypoints=");
     expect(plan.saturday.every((stop) => stop.mapsUrl.includes("destination="))).toBe(true);
     expect(plan.saturday.every((stop) => stop.why.length > 0)).toBe(true);
+    expect(plan.driveSource).toBe("haversine");
+  });
+
+  it("stamps drive and arrival times from a 9am depart", () => {
+    const ordered = orderSaturday(
+      start,
+      partitionSales(sales, start, saturday, sunday, false).saturday,
+      saturday,
+    );
+    const times = timeStops(start, ordered, saturday, 9 * 60);
+    expect(times[0]?.arrive).toBeGreaterThan(9 * 60);
+    expect(times[0]?.arrive).toBeLessThan(10 * 60);
+    const plan = planRoute(sales, query({ departAt: "09:00" }), "demo");
+    expect(plan.saturday[0]?.arriveLabel).toMatch(/Arrive /);
+    expect(plan.saturday[0]?.driveLabel).toMatch(/min drive/);
+  });
+
+  it("drops skipped stops and rebuilds from the remaining pool", () => {
+    const independence = sales.find((sale) => sale.name === "Independence Pickin Sale");
+    const plan = planRoute(
+      sales,
+      query({ excludeIds: independence ? [independence.id] : [] }),
+      "demo",
+    );
+    expect(plan.saturday.map((stop) => stop.sale.name)).not.toContain(
+      "Independence Pickin Sale",
+    );
+    expect(plan.saturday[0]?.sale.name).toBe("Lion Heart");
+  });
+
+  it("builds a Sunday leftover route with its own Maps link", () => {
+    const plan = planRoute(sales, query(), "demo");
+    expect(plan.sunday.map((stop) => stop.sale.name)).toEqual(["All Things West"]);
+    expect(plan.sunday[0]?.role).toBe("first");
+    expect(plan.sunday[0]?.arriveLabel).toMatch(/Arrive /);
+    expect(plan.sundayMapsUrl).toContain("destination=");
+    expect(decodeURIComponent(plan.sundayMapsUrl!.replace(/\+/g, " "))).toContain(
+      "570 Winners Ct NW",
+    );
   });
 });

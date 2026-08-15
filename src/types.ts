@@ -53,6 +53,7 @@ export interface CityPack {
   id: string;
   name: string;
   state: string;
+  kind: "seed" | "example";
   zips: string[];
   timezone: string;
   dataNote: string;
@@ -77,6 +78,16 @@ export interface RankedStop {
   mapsUrl: string;
   closeLabel: string;
   hoursLabel: string;
+  arriveLabel?: string;
+  leaveLabel?: string;
+  driveLabel?: string;
+  timingNote?: string;
+  missed?: boolean;
+  leaveByLabel?: string;
+  leaveByMinutes?: number;
+  driveMinutes?: number;
+  arriveMinutes?: number;
+  closeMinutes?: number;
 }
 
 export interface RoutePlan {
@@ -84,7 +95,9 @@ export interface RoutePlan {
   sunday: RankedStop[];
   skipped: RankedStop[];
   mapsUrl: string | null;
+  sundayMapsUrl: string | null;
   sourceNote: string;
+  driveSource: "osrm" | "haversine";
 }
 
 export interface HuntQuery {
@@ -96,6 +109,10 @@ export interface HuntQuery {
   windowEnd: string;
   categories: CategoryId[];
   halfDay: boolean;
+  departAt?: string;
+  sundayDepartAt?: string;
+  excludeIds?: string[];
+  feedUrl?: string;
 }
 
 export interface AdapterResult {
