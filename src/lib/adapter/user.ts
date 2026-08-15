@@ -1,25 +1,29 @@
-import type { AdapterResult, HuntQuery, Sale, SaleHours } from "../../types";
+import type { AdapterResult, HuntQuery, Sale } from "../../types";
 import { inferTags } from "../tags";
 import { parsePastedHours } from "../hours";
 import { weekendDates } from "../weekend";
+import { geocodeAddress, knownPoint } from "../geocode";
+import {
+  looksLikeJson,
+  parseJsonSales,
+  parseMessySales,
+  type LooseSale,
+} from "../parseList";
 import type { SaleAdapter } from "./types";
 
-interface LooseSale {
-  name?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  lat?: number;
-  lng?: number;
-  lastDay?: boolean;
-  description?: string;
-  hours?: SaleHours[] | string;
+function resolveCoords(raw: LooseSale): { lat: number; lng: number } | null {
+  if (typeof raw.lat === "number" && typeof raw.lng === "number") {
+    return { lat: raw.lat, lng: raw.lng };
+  }
+  if (!raw.address) return null;
+  const known = knownPoint(raw.address);
+  return known ? { lat: known.lat, lng: known.lng } : null;
 }
 
 function asSale(raw: LooseSale, index: number, weekend: string[]): Sale | null {
   if (!raw.name || !raw.address) return null;
-  if (typeof raw.lat !== "number" || typeof raw.lng !== "number") return null;
+  const coords = resolveCoords(raw);
+  if (!coords) return null;
 
   const hours =
     typeof raw.hours === "string"
@@ -36,8 +40,8 @@ function asSale(raw: LooseSale, index: number, weekend: string[]): Sale | null {
     city: raw.city ?? "",
     state: raw.state ?? "",
     zip: raw.zip ?? zipMatch?.[1] ?? "",
-    lat: raw.lat,
-    lng: raw.lng,
+    lat: coords.lat,
+    lng: coords.lng,
     hours,
     lastDay: Boolean(raw.lastDay),
     description: raw.description ?? "",
@@ -46,13 +50,44 @@ function asSale(raw: LooseSale, index: number, weekend: string[]): Sale | null {
   };
 }
 
-export function parseUserSales(text: string, weekend: string[]): Sale[] {
+export function parseLooseList(text: string, weekend: string[]): LooseSale[] {
   const trimmed = text.trim();
   if (!trimmed) return [];
+  if (looksLikeJson(trimmed)) {
+    try {
+      return parseJsonSales(trimmed);
+    } catch {
+      return parseMessySales(trimmed, weekend);
+    }
+  }
+  return parseMessySales(trimmed, weekend);
+}
 
-  const parsed = JSON.parse(trimmed) as LooseSale[] | LooseSale;
-  const rows = Array.isArray(parsed) ? parsed : [parsed];
-  return rows
+export function parseUserSales(text: string, weekend: string[]): Sale[] {
+  return parseLooseList(text, weekend)
+    .map((row, index) => asSale(row, index, weekend))
+    .filter((sale): sale is Sale => Boolean(sale));
+}
+
+export async function parseUserSalesAsync(
+  text: string,
+  weekend: string[],
+): Promise<Sale[]> {
+  const rows = parseLooseList(text, weekend);
+  const hydrated: LooseSale[] = [];
+
+  for (const row of rows) {
+    if (typeof row.lat === "number" && typeof row.lng === "number") {
+      hydrated.push(row);
+      continue;
+    }
+    if (!row.address) continue;
+    const point = knownPoint(row.address) ?? (await geocodeAddress(row.address));
+    if (!point) continue;
+    hydrated.push({ ...row, lat: point.lat, lng: point.lng });
+  }
+
+  return hydrated
     .map((row, index) => asSale(row, index, weekend))
     .filter((sale): sale is Sale => Boolean(sale));
 }
@@ -64,20 +99,20 @@ export function userAdapter(payload: string): SaleAdapter {
     async load(query: HuntQuery): Promise<AdapterResult> {
       try {
         const weekend = weekendDates(query.windowStart, query.windowEnd);
-        const sales = parseUserSales(payload, weekend);
+        const sales = await parseUserSalesAsync(payload, weekend);
         return {
           sales,
           source: "user",
           note:
             sales.length > 0
               ? `Using ${sales.length} sale${sales.length === 1 ? "" : "s"} from your pasted list. Not live directory data.`
-              : "Pasted list was empty or missing name, address, coordinates, or hours.",
+              : "Pasted list had no usable sales. Need a name, a US address, and hours (or Sat/Sun times).",
         };
       } catch {
         return {
           sales: [],
           source: "user",
-          note: "Could not parse the pasted list. Use the example JSON shape.",
+          note: "Could not parse the pasted list. JSON or messy text both work.",
         };
       }
     },
