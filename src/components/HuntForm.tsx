@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CITY_PACKS } from "../data";
 import { isImageFile, readSalePhoto } from "../lib/ocr";
 import { CATEGORIES, type CategoryId } from "../types";
@@ -34,6 +35,9 @@ interface HuntFormProps {
 }
 
 export function HuntForm(props: HuntFormProps) {
+  const [ocrDraft, setOcrDraft] = useState<string | null>(null);
+  const [ocrError, setOcrError] = useState("");
+
   return (
     <form
       className="card"
@@ -185,17 +189,19 @@ export function HuntForm(props: HuntFormProps) {
               if (!file) return;
               if (isImageFile(file)) {
                 props.onReadingPhoto(true);
+                setOcrError("");
                 try {
                   const text = await readSalePhoto(file);
                   if (!text) throw new Error("empty");
-                  props.onPasted(props.pasted ? `${props.pasted}\n\n${text}` : text);
+                  setOcrDraft(text);
                 } catch {
-                  props.onPasted(
-                    props.pasted ||
-                      "# Could not read that photo. Type or paste the sale list instead.",
+                  setOcrDraft(null);
+                  setOcrError(
+                    "Could not read that photo. Fix the text by hand, or paste the list.",
                   );
                 } finally {
                   props.onReadingPhoto(false);
+                  event.target.value = "";
                 }
                 return;
               }
@@ -204,6 +210,49 @@ export function HuntForm(props: HuntFormProps) {
           />
         </label>
         {props.readingPhoto ? <p className="empty">Reading photo…</p> : null}
+        {ocrError ? <p className="error">{ocrError}</p> : null}
+        {ocrDraft !== null ? (
+          <div className="ocr-review">
+            <p className="section-label">Check the photo text</p>
+            <p className="empty">
+              OCR guesses. Fix addresses before they become stops.
+            </p>
+            <textarea
+              value={ocrDraft}
+              onChange={(event) => setOcrDraft(event.target.value)}
+            />
+            <div className="stop-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  props.onPasted(
+                    props.pasted ? `${props.pasted}\n\n${ocrDraft}` : ocrDraft,
+                  );
+                  setOcrDraft(null);
+                }}
+              >
+                Add to list
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  props.onPasted(ocrDraft);
+                  setOcrDraft(null);
+                }}
+              >
+                Replace list
+              </button>
+            </div>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => setOcrDraft(null)}
+            >
+              Discard
+            </button>
+          </div>
+        ) : null}
         <label className="field">
           <span>Optional feed URL</span>
           <input

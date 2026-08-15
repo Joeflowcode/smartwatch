@@ -1,0 +1,16 @@
+{
+  "name": "Weekend Sale Router",
+  "short_name": "Sale Router",
+  "description": "First, next, last — weekend estate sale driving order.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3ead8",
+  "theme_color": "#1c1914",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

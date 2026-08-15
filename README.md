@@ -60,7 +60,9 @@ Free-flow Saturday order the router is tested against:
 5. Two-day sales that sit opposite that last-day backbone become **Sunday leftover**.
 6. Half-day mode drops a noon-close stop if it is 20+ minutes from the rest of the cluster.
 
-Drive times are a free client-side estimate (haversine at urban speed). They do not require OSRM or a Google key.
+Drive times prefer the public OSRM table (road minutes). If that request fails, the app falls back to a crow-flies estimate. No Google key. The route banner says which one you got.
+
+Photo upload now **shows the OCR text for edits** before it is added to your list. Add, replace, or discard.
 
 ## How to add a city
 
@@ -72,6 +74,8 @@ Drive times are a free client-side estimate (haversine at urban speed). They do 
 City packs are demo/seed files. They are not a live scrape. ZIP codes on the pack decide when the optional city/ZIP field selects that city. Set `kind` to `"seed"` for real weekend listings or `"example"` for clearly labeled examples.
 
 Portland is the second pack: labeled examples on Census-geocoded streets (Hawthorne, 28th, Alberta, St Johns, Pearl). Not live inventory.
+
+A second **real** weekend pack (Eugene/Springfield) was not added: only one this-weekend listing had a full public street address. The app will not invent the rest.
 
 ## Paste format
 
@@ -113,3 +117,11 @@ This is for a list you control or a future licensed dump. It is not a scrape of 
 ## Deploy
 
 Netlify build command `npm run build`, publish directory `dist`. SPA fallback is already in `netlify.toml`.
+
+```bash
+npx netlify login
+npx netlify deploy --dir=dist          # draft preview
+npx netlify deploy --dir=dist --prod   # production
+```
+
+This cloud environment has no Netlify login, so a live preview URL has to be created from your machine or Netlify Git.

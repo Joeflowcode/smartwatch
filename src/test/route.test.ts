@@ -79,6 +79,7 @@ describe("Salem Aug 15–16 2026 seed", () => {
     expect(plan.mapsUrl).toContain("waypoints=");
     expect(plan.saturday.every((stop) => stop.mapsUrl.includes("destination="))).toBe(true);
     expect(plan.saturday.every((stop) => stop.why.length > 0)).toBe(true);
+    expect(plan.driveSource).toBe("haversine");
   });
 
   it("stamps drive and arrival times from a 9am depart", () => {

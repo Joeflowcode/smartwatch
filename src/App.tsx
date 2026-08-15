@@ -6,6 +6,7 @@ import { loadSales } from "./lib/adapter";
 import { licensedFeedAdapter } from "./lib/adapter/licensed";
 import { geocodeAddress } from "./lib/geocode";
 import { loadPrefs, savePrefs } from "./lib/prefs";
+import { fetchOsrmMatrix } from "./lib/osrm";
 import { planRoute } from "./lib/route";
 import { parseShare, shareUrl } from "./lib/share";
 import { formatDateRange } from "./lib/hours";
@@ -103,7 +104,8 @@ export default function App() {
         ? { sales: reuseSales, note: plan?.sourceNote ?? "Using the current list." }
         : await loadSales(query, pasted, feedUrl);
       if (!reuseSales) setSalesCache(loaded.sales);
-      const nextPlan = planRoute(loaded.sales, query, loaded.note);
+      const matrix = await fetchOsrmMatrix([start, ...loaded.sales]);
+      const nextPlan = planRoute(loaded.sales, query, loaded.note, matrix);
       setPlan(nextPlan);
       const stub = await licensedFeedAdapter(feedUrl).load(query);
       setFeedNote(stub.note);
@@ -285,6 +287,11 @@ export default function App() {
             <span className="empty">{formatDateRange(windowStart, windowEnd)}</span>
           </div>
           <p className="banner">{plan.sourceNote}</p>
+          <p className="banner">
+            {plan.driveSource === "osrm"
+              ? "Drive times are road minutes from OpenStreetMap/OSRM."
+              : "Drive times are a crow-flies estimate. OSRM was unavailable."}
+          </p>
           {here || excludeIds.length > 0 ? (
             <div className="banner progress">
               {here ? `Starting from ${here.label}. ` : ""}

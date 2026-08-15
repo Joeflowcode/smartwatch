@@ -7,7 +7,15 @@ import type {
   Sale,
   StopRole,
 } from "../types";
-import { angleDegrees, driveMinutes, haversineMiles, toXY } from "./distance";
+import {
+  angleDegrees,
+  createDriveFn,
+  driveMinutes,
+  haversineMiles,
+  toXY,
+  type DriveFn,
+  type DriveMatrix,
+} from "./distance";
 import {
   closeOn,
   formatClock,
@@ -46,11 +54,11 @@ function isBackbone(sale: Sale, saturday: string): boolean {
   return sale.lastDay || isEarlyClose(sale, saturday);
 }
 
-function routeMinutes(start: LatLng, stops: Sale[]): number {
+function routeMinutes(start: LatLng, stops: Sale[], drive: DriveFn): number {
   let total = 0;
   let current = start;
   for (const stop of stops) {
-    total += driveMinutes(current, stop);
+    total += drive(current, stop);
     current = stop;
   }
   return total;
@@ -61,6 +69,7 @@ function cheapestInsert(
   route: Sale[],
   stop: Sale,
   afterIndex: number,
+  drive: DriveFn,
 ): Sale[] {
   let best = [...route, stop];
   let bestCost = Number.POSITIVE_INFINITY;
@@ -68,7 +77,7 @@ function cheapestInsert(
 
   for (let index = from; index <= route.length; index += 1) {
     const candidate = [...route.slice(0, index), stop, ...route.slice(index)];
-    const cost = routeMinutes(start, candidate);
+    const cost = routeMinutes(start, candidate, drive);
     if (cost < bestCost) {
       bestCost = cost;
       best = candidate;
@@ -78,13 +87,18 @@ function cheapestInsert(
   return best;
 }
 
-function orderMorningMust(start: LatLng, must: Sale[], saturday: string): Sale[] {
+function orderMorningMust(
+  start: LatLng,
+  must: Sale[],
+  saturday: string,
+  drive: DriveFn,
+): Sale[] {
   const byClose = [...must].sort((a, b) => {
     const closeA = closeOn(a, saturday) ?? "23:59";
     const closeB = closeOn(b, saturday) ?? "23:59";
     const closeCmp = parseClock(closeA) - parseClock(closeB);
     if (closeCmp !== 0) return closeCmp;
-    return driveMinutes(start, a) - driveMinutes(start, b);
+    return drive(start, a) - drive(start, b);
   });
   return byClose;
 }
@@ -126,6 +140,7 @@ function halfDayOutlier(
   sale: Sale,
   cluster: Sale[],
   saturday: string,
+  drive: DriveFn,
 ): boolean {
   const close = closeOn(sale, saturday);
   if (!close || parseClock(close) > parseClock("12:00")) return false;
@@ -135,7 +150,7 @@ function halfDayOutlier(
     lat: cluster.reduce((sum, item) => sum + item.lat, 0) / cluster.length,
     lng: cluster.reduce((sum, item) => sum + item.lng, 0) / cluster.length,
   };
-  return driveMinutes(sale, centroid) >= HALF_DAY_OUTLIER_MINUTES;
+  return drive(sale, centroid) >= HALF_DAY_OUTLIER_MINUTES;
 }
 
 export function partitionSales(
@@ -144,6 +159,7 @@ export function partitionSales(
   saturday: string,
   sunday: string | undefined,
   halfDay: boolean,
+  drive: DriveFn = driveMinutes,
 ): PartitionedSales {
   const openSaturday = sales.filter((sale) => isOpenOn(sale, saturday));
   const sundayOnly = sales.filter(
@@ -156,7 +172,12 @@ export function partitionSales(
     (sale) => sale.lastDay && !isEarlyClose(sale, saturday),
   );
 
-  const backbone = orderMorningMust(start, [...morningMust, ...lateLastDay], saturday);
+  const backbone = orderMorningMust(
+    start,
+    [...morningMust, ...lateLastDay],
+    saturday,
+    drive,
+  );
   const leftover: Sale[] = [...sundayOnly];
   const keepOptional: Sale[] = [];
 
@@ -175,7 +196,7 @@ export function partitionSales(
   if (halfDay) {
     const cluster = saturdayPool.filter((sale) => sale.id !== backbone[0]?.id);
     saturdayPool = saturdayPool.filter((sale) => {
-      if (halfDayOutlier(sale, cluster, saturday)) {
+      if (halfDayOutlier(sale, cluster, saturday, drive)) {
         skipped.push(sale);
         return false;
       }
@@ -186,11 +207,17 @@ export function partitionSales(
   return { saturday: saturdayPool, sunday: leftover, skipped };
 }
 
-export function orderSaturday(start: LatLng, sales: Sale[], saturday: string): Sale[] {
+export function orderSaturday(
+  start: LatLng,
+  sales: Sale[],
+  saturday: string,
+  drive: DriveFn = driveMinutes,
+): Sale[] {
   const morning = orderMorningMust(
     start,
     sales.filter((sale) => isEarlyClose(sale, saturday)),
     saturday,
+    drive,
   );
   const lockedAfter = morning.length;
   let route = [...morning];
@@ -204,7 +231,7 @@ export function orderSaturday(start: LatLng, sales: Sale[], saturday: string): S
     });
 
   for (const stop of remainingLastDay) {
-    route = cheapestInsert(start, route, stop, lockedAfter);
+    route = cheapestInsert(start, route, stop, lockedAfter, drive);
   }
 
   const optional = sales
@@ -215,15 +242,12 @@ export function orderSaturday(start: LatLng, sales: Sale[], saturday: string): S
       const closeCmp = parseClock(closeA) - parseClock(closeB);
       if (closeCmp !== 0) return closeCmp;
       const near = (sale: Sale) =>
-        Math.min(
-          driveMinutes(start, sale),
-          ...route.map((item) => driveMinutes(item, sale)),
-        );
+        Math.min(drive(start, sale), ...route.map((item) => drive(item, sale)));
       return near(a) - near(b);
     });
 
   for (const stop of optional) {
-    route = cheapestInsert(start, route, stop, lockedAfter);
+    route = cheapestInsert(start, route, stop, lockedAfter, drive);
   }
 
   return route;
@@ -243,21 +267,22 @@ export function timeStops(
   date: string,
   departMinutes: number,
   dwell = DWELL_MINUTES,
+  drive: DriveFn = driveMinutes,
 ): StopTiming[] {
   const timings: StopTiming[] = [];
   let current = start;
   let clock = departMinutes;
 
   for (const sale of sales) {
-    const drive = driveMinutes(current, sale);
-    const arrive = clock + drive;
+    const driveMins = drive(current, sale);
+    const arrive = clock + driveMins;
     const close = closeOn(sale, date);
     const closeMin = close ? parseClock(close) : 24 * 60;
     const slack = closeMin - arrive;
     timings.push({
       arrive,
       leave: arrive + dwell,
-      drive,
+      drive: driveMins,
       missed: slack < 0,
       slack,
     });
@@ -320,10 +345,13 @@ function rankStops(
   query: HuntQuery,
   saturday: string,
   departMinutes: number,
+  drive: DriveFn,
 ): RankedStop[] {
   const roles = assignRoles(list);
   const timings =
-    kind === "skipped" ? [] : timeStops(query.start, list, date, departMinutes);
+    kind === "skipped"
+      ? []
+      : timeStops(query.start, list, date, departMinutes, DWELL_MINUTES, drive);
 
   return list.map((sale, index) => {
     const timing = timings[index];
@@ -361,11 +389,13 @@ export function planRoute(
   sales: Sale[],
   query: HuntQuery,
   sourceNote: string,
+  matrix?: DriveMatrix | null,
 ): RoutePlan {
   const saturday = saturdayOf(query.windowStart, query.windowEnd);
   const sunday = sundayOf(query.windowStart, query.windowEnd);
   const exclude = new Set(query.excludeIds ?? []);
   const departMinutes = parseClock(query.departAt ?? "09:00");
+  const drive = createDriveFn(matrix);
 
   const inWindow = sales.filter((sale) =>
     sale.hours.some(
@@ -383,14 +413,23 @@ export function planRoute(
     saturday,
     sunday,
     query.halfDay,
+    drive,
   );
-  const ordered = orderSaturday(query.start, parts.saturday, saturday);
+  const ordered = orderSaturday(query.start, parts.saturday, saturday, drive);
   const sundayOrdered = sunday
-    ? orderSaturday(query.start, parts.sunday, sunday)
+    ? orderSaturday(query.start, parts.sunday, sunday, drive)
     : parts.sunday;
 
   return {
-    saturday: rankStops(ordered, "saturday", saturday, query, saturday, departMinutes),
+    saturday: rankStops(
+      ordered,
+      "saturday",
+      saturday,
+      query,
+      saturday,
+      departMinutes,
+      drive,
+    ),
     sunday: rankStops(
       sundayOrdered,
       "sunday",
@@ -398,8 +437,17 @@ export function planRoute(
       query,
       saturday,
       departMinutes,
+      drive,
     ),
-    skipped: rankStops(parts.skipped, "skipped", saturday, query, saturday, departMinutes),
+    skipped: rankStops(
+      parts.skipped,
+      "skipped",
+      saturday,
+      query,
+      saturday,
+      departMinutes,
+      drive,
+    ),
     mapsUrl: routeMapsUrl(
       query.startLabel,
       ordered.map((sale) => sale.address),
@@ -409,5 +457,6 @@ export function planRoute(
       sundayOrdered.map((sale) => sale.address),
     ),
     sourceNote,
+    driveSource: matrix?.source === "osrm" ? "osrm" : "haversine",
   };
 }

@@ -93,6 +93,7 @@ export interface RoutePlan {
   mapsUrl: string | null;
   sundayMapsUrl: string | null;
   sourceNote: string;
+  driveSource: "osrm" | "haversine";
 }
 
 export interface HuntQuery {
