@@ -1,0 +1,140 @@
+{
+  "id": "salem-or",
+  "name": "Salem, OR",
+  "state": "OR",
+  "zips": [
+    "97301",
+    "97302",
+    "97303",
+    "97304",
+    "97305",
+    "97306",
+    "97317",
+    "97351"
+  ],
+  "timezone": "America/Los_Angeles",
+  "dataNote": "Bundled demo seed for the Salem metro weekend of Sat Aug 15–Sun Aug 16, 2026. Addresses are real. This is not a live scrape.",
+  "defaultStart": {
+    "label": "1980 Madras St SE, Salem, OR 97306",
+    "lat": 44.866951,
+    "lng": -123.020732
+  },
+  "sales": [
+    {
+      "id": "independence-pickin",
+      "name": "Independence Pickin Sale",
+      "address": "115 S 6th St, Independence, OR 97351",
+      "city": "Independence",
+      "state": "OR",
+      "zip": "97351",
+      "lat": 44.8528,
+      "lng": -123.192049,
+      "lastDay": true,
+      "description": "Pickin sale. Last day Saturday.",
+      "hours": [{ "date": "2026-08-15", "open": "09:00", "close": "12:00" }]
+    },
+    {
+      "id": "lion-heart",
+      "name": "Lion Heart",
+      "address": "860 Salem Heights Ave S, Salem, OR 97302",
+      "city": "Salem",
+      "state": "OR",
+      "zip": "97302",
+      "lat": 44.908308,
+      "lng": -123.058325,
+      "lastDay": true,
+      "description": "Antiques, books, instruments. Last day Saturday.",
+      "hours": [{ "date": "2026-08-15", "open": "09:00", "close": "13:00" }]
+    },
+    {
+      "id": "all-things-south",
+      "name": "All Things South",
+      "address": "4182 Barrett St S, Salem, OR 97302",
+      "city": "Salem",
+      "state": "OR",
+      "zip": "97302",
+      "lat": 44.895533,
+      "lng": -123.062782,
+      "lastDay": false,
+      "description": "50 years of stuff, camping, military.",
+      "hours": [
+        { "date": "2026-08-15", "open": "09:00", "close": "15:00" },
+        { "date": "2026-08-16", "open": "09:00", "close": "15:00" }
+      ]
+    },
+    {
+      "id": "j-house-south",
+      "name": "J House South",
+      "address": "5980 Smoketree Dr SE, Salem, OR 97306",
+      "city": "Salem",
+      "state": "OR",
+      "zip": "97306",
+      "lat": 44.86913,
+      "lng": -123.038457,
+      "lastDay": true,
+      "description": "TVs, cameras, vintage books, tools. Last day Saturday.",
+      "hours": [{ "date": "2026-08-15", "open": "09:00", "close": "17:00" }]
+    },
+    {
+      "id": "me-huge",
+      "name": "M&E huge",
+      "address": "6644 Rippling Brook Dr SE, Salem, OR 97317",
+      "city": "Salem",
+      "state": "OR",
+      "zip": "97317",
+      "lat": 44.910155,
+      "lng": -122.925318,
+      "lastDay": false,
+      "description": "Huge estate sale.",
+      "hours": [
+        { "date": "2026-08-15", "open": "09:00", "close": "16:00" },
+        { "date": "2026-08-16", "open": "09:00", "close": "15:00" }
+      ]
+    },
+    {
+      "id": "j-house-east",
+      "name": "J House East",
+      "address": "4966 Swegle Rd NE, Salem, OR 97301",
+      "city": "Salem",
+      "state": "OR",
+      "zip": "97301",
+      "lat": 44.94888,
+      "lng": -122.960841,
+      "lastDay": true,
+      "description": "Vintage toys, photography, hobby room. Last day Saturday.",
+      "hours": [{ "date": "2026-08-15", "open": "09:00", "close": "17:00" }]
+    },
+    {
+      "id": "fairgrounds-flea",
+      "name": "Fairgrounds flea",
+      "address": "2135 Fairgrounds Rd NE, Salem, OR 97301",
+      "city": "Salem",
+      "state": "OR",
+      "zip": "97301",
+      "lat": 44.956879,
+      "lng": -123.019481,
+      "lastDay": false,
+      "description": "Games and consoles advertised.",
+      "hours": [
+        { "date": "2026-08-15", "open": "09:15", "close": "18:30" },
+        { "date": "2026-08-16", "open": "09:15", "close": "18:00" }
+      ]
+    },
+    {
+      "id": "all-things-west",
+      "name": "All Things West",
+      "address": "570 Winners Ct NW, Salem, OR 97304",
+      "city": "Salem",
+      "state": "OR",
+      "zip": "97304",
+      "lat": 44.941877,
+      "lng": -123.080964,
+      "lastDay": false,
+      "description": "Jewelry, clock, garage.",
+      "hours": [
+        { "date": "2026-08-15", "open": "09:00", "close": "15:00" },
+        { "date": "2026-08-16", "open": "09:00", "close": "15:00" }
+      ]
+    }
+  ]
+}
