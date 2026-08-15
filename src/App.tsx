@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { HuntForm } from "./components/HuntForm";
+import { InstallBanner } from "./components/InstallBanner";
 import { StopCard } from "./components/StopCard";
 import { CITY_PACKS, findCityPackById } from "./data";
 import { loadSales } from "./lib/adapter";
@@ -9,6 +10,7 @@ import { loadPrefs, savePrefs } from "./lib/prefs";
 import { fetchOsrmMatrix } from "./lib/osrm";
 import { planRoute } from "./lib/route";
 import { formatRouteText, parseShare, shareUrl, shopperUrl } from "./lib/share";
+import { buildLeaveByIcs, leaveByEvents, openLeaveByCalendar } from "./lib/ics";
 import { clockToHhmm, formatDateRange, minutesToClock, parseClock } from "./lib/hours";
 import {
   activeRouteDate,
@@ -48,6 +50,7 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [shopperStatus, setShopperStatus] = useState("");
+  const [calendarStatus, setCalendarStatus] = useState("");
   const [plan, setPlan] = useState<RoutePlan | null>(null);
   const [feedNote, setFeedNote] = useState("");
   const [excludeIds, setExcludeIds] = useState<string[]>([]);
@@ -364,6 +367,23 @@ export default function App() {
     }
   }
 
+  async function addLeaveByCalendar() {
+    if (!plan) return;
+    const events = leaveByEvents(plan, windowStart, windowEnd);
+    if (events.length === 0) {
+      setError("No leave-by time yet. Build a Saturday route first.");
+      return;
+    }
+    try {
+      await openLeaveByCalendar(buildLeaveByIcs(events, activePack.timezone));
+      setCalendarStatus("Calendar file ready");
+      window.setTimeout(() => setCalendarStatus(""), 2000);
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      setError("Could not create the calendar file.");
+    }
+  }
+
   return (
     <main className="app">
       <header className="masthead">
@@ -373,6 +393,8 @@ export default function App() {
           First, next, last — from your driveway, with early closes protected.
         </p>
       </header>
+
+      <InstallBanner />
 
       {hostList ? (
         <p className="banner host">
@@ -539,6 +561,13 @@ export default function App() {
             onClick={() => void copyShopperLink()}
           >
             {shopperStatus || "Copy shopper link"}
+          </button>
+          <button
+            type="button"
+            style={{ width: "100%", marginBottom: "1rem" }}
+            onClick={() => void addLeaveByCalendar()}
+          >
+            {calendarStatus || "Add leave-by to Calendar"}
           </button>
 
           <details className="details card">

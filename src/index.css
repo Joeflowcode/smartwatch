@@ -161,6 +161,20 @@ h1 {
   gap: 0.35rem 0.75rem;
 }
 
+.banner.install {
+  background: #e7d7b8;
+  color: var(--ink);
+}
+
+.banner.install p {
+  margin: 0 0 0.65rem;
+}
+
+.install-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--line);

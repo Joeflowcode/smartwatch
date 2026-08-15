@@ -358,7 +358,7 @@ function rankStops(
     const tight = Boolean(timing && !timing.missed && timing.slack < 30);
     const open = hoursOnDate(sale, date)?.open;
     const leaveBy =
-      kind === "saturday" && index === 0 && timing && open
+      kind !== "skipped" && index === 0 && timing && open
         ? parseClock(open) - timing.drive
         : undefined;
     return {
@@ -375,6 +375,7 @@ function rankStops(
         leaveBy !== undefined
           ? `Leave by ${minutesToClock(leaveBy)} to arrive at the ${formatClock(open!)} open`
           : undefined,
+      leaveByMinutes: leaveBy,
       timingNote: timing?.missed
         ? "Would miss the posted close"
         : tight

@@ -84,6 +84,7 @@ export interface RankedStop {
   timingNote?: string;
   missed?: boolean;
   leaveByLabel?: string;
+  leaveByMinutes?: number;
   driveMinutes?: number;
   arriveMinutes?: number;
   closeMinutes?: number;
