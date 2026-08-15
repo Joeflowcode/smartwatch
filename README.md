@@ -1,79 +1,101 @@
-# Data Project Template
+# Weekend Sale Router
 
-<a target="_blank" href="https://datalumina.com/">
-    <img src="https://img.shields.io/badge/Datalumina-Project%20Template-2856f7" alt="Datalumina Project" />
-</a>
+Phone-first web app that turns a weekend of estate sales (and garage/moving sales when you have that data) into a first → next → last driving order from your house.
 
-## Cookiecutter Data Science
-This project template is a simplified version of the [Cookiecutter Data Science](https://cookiecutter-data-science.drivendata.org) template, created to suit the needs of Datalumina and made available as a GitHub template.
+Built for resellers and shoppers. Type a US start address — or use device location — pick a hunt list, and get a Saturday sweep that protects early closes.
 
-## Adjusting .gitignore
-
-Ensure you adjust the `.gitignore` file according to your project needs. For example, since this is a template, the `/data/` folder is commented out and data will not be exlucded from source control:
-
-```plaintext
-# exclude data from source control by default
-# /data/
-```
-
-Typically, you want to exclude this folder if it contains either sensitive data that you do not want to add to version control or large files.
-
-## Duplicating the .env File
-To set up your environment variables, you need to duplicate the `.env.example` file and rename it to `.env`. You can do this manually or using the following terminal command:
+## Run locally
 
 ```bash
-cp .env.example .env # Linux, macOS, Git Bash, WSL
-copy .env.example .env # Windows Command Prompt
+npm install
+npm run dev
 ```
 
-This command creates a copy of `.env.example` and names it `.env`, allowing you to configure your environment variables specific to your setup.
+Then open the Vite URL (usually `http://localhost:5173`).
 
-
-## Project Organization
-
-```
-├── LICENSE            <- Open-source license if one is chosen
-├── README.md          <- The top-level README for developers using this project
-├── data
-│   ├── external       <- Data from third party sources
-│   ├── interim        <- Intermediate data that has been transformed
-│   ├── processed      <- The final, canonical data sets for modeling
-│   └── raw            <- The original, immutable data dump
-│
-├── models             <- Trained and serialized models, model predictions, or model summaries
-│
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`
-│
-├── references         <- Data dictionaries, manuals, and all other explanatory materials
-│
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
-│
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
-│
-└── src                         <- Source code for this project
-    │
-    ├── __init__.py             <- Makes src a Python module
-    │
-    ├── config.py               <- Store useful variables and configuration
-    │
-    ├── dataset.py              <- Scripts to download or generate data
-    │
-    ├── features.py             <- Code to create features for modeling
-    │
-    │    
-    ├── modeling                
-    │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
-    │
-    ├── plots.py                <- Code to create visualizations 
-    │
-    └── services                <- Service classes to connect with external platforms, tools, or APIs
-        └── __init__.py 
+```bash
+npm test          # routing, tags, hours, Maps URLs
+npm run build     # production build
 ```
 
---------
+No accounts. No paid Google key. The ordered list is computed in the browser from coordinates + hours. Maps buttons are Google Maps driving deep links.
+
+**Success check:** enter `1980 Madras St SE, Salem, OR 97306`, leave the date window on this weekend (Sat Aug 15–Sun Aug 16, 2026), tap **Electronics** and **Vintage**, then **Build route**. You should see a FIRST / NEXT / LAST Saturday list with inferred tags, close times, and working Maps links.
+
+## Demo vs live data
+
+This app talks to a **data adapter**. It does **not** scrape EstateSales.net, Facebook, or Craigslist.
+
+| Source | What it is | When it is used |
+| --- | --- | --- |
+| **Bundled demo seed** | Real Salem, OR addresses for Sat Aug 15–Sun Aug 16, 2026 | Default. Works offline. |
+| **Your pasted / uploaded JSON** | Sales you supply (name, address, lat/lng, hours, description) | When the paste box or file upload has a valid list |
+| **Licensed live feed** | Stub only | Not connected. Partner API keys on EstateSales.net are for companies *posting* their own sales, not reading the national directory. |
+
+Coordinates in the Salem seed were resolved with the public [US Census geocoder](https://geocoding.geo.census.gov/) for those exact addresses. Descriptions only use the facts in the seed brief. Category chips that come from title/description keywords are marked **inferred**.
+
+A reviewer should treat the Salem weekend as **demo data**, not a live feed.
+
+## Salem demo route (from 1980 Madras St SE)
+
+Free-flow Saturday order the router is tested against:
+
+1. Independence Pickin Sale — noon last day
+2. Lion Heart — 1pm last day
+3. All Things South
+4. J House South
+5. M&E huge
+6. J House East
+7. Fairgrounds flea
+
+**All Things West** drops to the Sunday leftover list (open Sunday, off the Saturday sweep). **Half-day mode** skips Independence (noon close, 20+ minutes off the main cluster).
+
+## How routing works
+
+1. Filter by date window and hunt-list tags.
+2. Saturday **morning musts** are sales that close by 2pm, visited in close-time order so a noon last-day stop is not buried behind a 5pm neighbor.
+3. Remaining Saturday stops are nearest-neighbor from the last morning must — a geographic sweep.
+4. Two-day sales that sit opposite that last-day backbone become **Sunday leftover**.
+5. Half-day mode drops a noon-close stop if it is 20+ minutes from the rest of the cluster.
+
+Drive times are a free client-side estimate (haversine at urban speed). They do not require OSRM or a Google key.
+
+## How to add a city
+
+1. Copy `src/data/cities/salem-or.json` to `src/data/cities/<city>-<st>.json`.
+2. Fill in real sale addresses only. Include `lat` / `lng` (Census geocoder or another public geocoder). Do not invent addresses.
+3. Register the pack in `src/data/index.ts` (`CITY_PACKS`).
+4. Add a test in `src/test/` if the city has a known drive order.
+
+City packs are demo/seed files. They are not a live scrape. ZIP codes on the pack decide when the optional city/ZIP field selects that city.
+
+## Paste format
+
+```json
+[
+  {
+    "name": "Example garage sale (labeled example)",
+    "address": "350 Commercial St NE, Salem, OR 97301",
+    "lat": 44.9412,
+    "lng": -123.0395,
+    "lastDay": false,
+    "description": "Tools, records, and a stereo. Clearly labeled example.",
+    "hours": [
+      { "date": "2026-08-15", "open": "08:00", "close": "14:00" }
+    ]
+  }
+]
+```
+
+See `src/data/examples/user-sales.example.json`. Hours can also be a string such as `Sat/Sun 9am–3pm`.
+
+## Stack
+
+- Vite + React + TypeScript
+- Vitest for tagging and routing
+- Netlify (`netlify.toml` + optional `/api/geocode` Census proxy for start addresses that are not in the seed)
+- Phone-first CSS, no account system
+
+## Deploy
+
+Netlify build command `npm run build`, publish directory `dist`. SPA fallback is already in `netlify.toml`.

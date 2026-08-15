@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Example garage sale (labeled example)",
+    "address": "350 Commercial St NE, Salem, OR 97301",
+    "description": "Tools, records, and a stereo. Clearly labeled example — not a real listing.",
+    "lastDay": false,
+    "hours": [
+      { "date": "2026-08-15", "open": "08:00", "close": "14:00" }
+    ],
+    "lat": 44.9412,
+    "lng": -123.0395
+  }
+]
