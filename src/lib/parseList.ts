@@ -118,6 +118,11 @@ export function parseMessySales(text: string, weekend: string[]): LooseSale[] {
 }
 
 export function parseJsonSales(text: string): LooseSale[] {
-  const parsed = JSON.parse(text) as LooseSale[] | LooseSale;
-  return Array.isArray(parsed) ? parsed : [parsed];
+  const parsed = JSON.parse(text) as unknown;
+  if (Array.isArray(parsed)) return parsed as LooseSale[];
+  if (parsed && typeof parsed === "object" && "sales" in parsed) {
+    const sales = (parsed as { sales: unknown }).sales;
+    if (Array.isArray(sales)) return sales as LooseSale[];
+  }
+  return [parsed as LooseSale];
 }

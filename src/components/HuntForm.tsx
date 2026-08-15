@@ -280,6 +280,11 @@ export function HuntForm(props: HuntFormProps) {
             placeholder="/feeds/example.json"
           />
         </label>
+        <p className="empty">
+          Leave this blank to look up a licensed feed by ZIP. Nothing is
+          connected yet — that needs a partner URL in Netlify env, not a
+          scrape.
+        </p>
       </details>
       <div className="actions" style={{ marginTop: "0.9rem" }}>
         <button type="submit" disabled={props.busy}>

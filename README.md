@@ -32,6 +32,7 @@ This app talks to a **data adapter**. It does **not** scrape EstateSales.net, Fa
 | **Portland examples** | Real Portland streets, **labeled examples**, not this weekend’s sales | City pack chip “Portland, OR · examples” |
 | **Your pasted / uploaded list** | Messy text, JSON, or a photo (on-device OCR) | When the paste box or file upload has a usable list |
 | **JSON feed you host** | Same sale shape as paste. Optional `VITE_SALES_FEED_URL` or the feed URL field | When that URL returns sales. Same-origin `/feeds/example.json` is included. CORS failures go through `/api/feed` (https only). |
+| **Licensed ZIP lookup** | `/api/sales` fills `SALES_FEED_TEMPLATE` with the hunt ZIP/city/dates | Empty until those Netlify env vars are set. Token stays server-side. **Not a scrape.** |
 
 Coordinates in the Salem seed were resolved with the public [US Census geocoder](https://geocoding.geo.census.gov/) for those exact addresses. Descriptions only use the facts in the seed brief. Category chips that come from title/description keywords are marked **inferred**.
 
