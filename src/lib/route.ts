@@ -41,27 +41,36 @@ function isBackbone(sale: Sale, saturday: string): boolean {
   return sale.lastDay || isEarlyClose(sale, saturday);
 }
 
-function nearestNeighbor(start: LatLng, stops: Sale[]): Sale[] {
-  const remaining = [...stops];
-  const ordered: Sale[] = [];
+function routeMinutes(start: LatLng, stops: Sale[]): number {
+  let total = 0;
   let current = start;
+  for (const stop of stops) {
+    total += driveMinutes(current, stop);
+    current = stop;
+  }
+  return total;
+}
 
-  while (remaining.length > 0) {
-    let bestIdx = 0;
-    let bestDrive = Number.POSITIVE_INFINITY;
-    remaining.forEach((sale, index) => {
-      const minutes = driveMinutes(current, sale);
-      if (minutes < bestDrive) {
-        bestDrive = minutes;
-        bestIdx = index;
-      }
-    });
-    const next = remaining.splice(bestIdx, 1)[0];
-    ordered.push(next);
-    current = next;
+function cheapestInsert(
+  start: LatLng,
+  route: Sale[],
+  stop: Sale,
+  afterIndex: number,
+): Sale[] {
+  let best = [...route, stop];
+  let bestCost = Number.POSITIVE_INFINITY;
+  const from = Math.max(afterIndex, 0);
+
+  for (let index = from; index <= route.length; index += 1) {
+    const candidate = [...route.slice(0, index), stop, ...route.slice(index)];
+    const cost = routeMinutes(start, candidate);
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = candidate;
+    }
   }
 
-  return ordered;
+  return best;
 }
 
 function orderMorningMust(start: LatLng, must: Sale[], saturday: string): Sale[] {
@@ -178,9 +187,41 @@ export function orderSaturday(start: LatLng, sales: Sale[], saturday: string): S
     sales.filter((sale) => isEarlyClose(sale, saturday)),
     saturday,
   );
-  const rest = sales.filter((sale) => !morning.some((item) => item.id === sale.id));
-  const lastMorning = morning[morning.length - 1] ?? start;
-  return [...morning, ...nearestNeighbor(lastMorning, rest)];
+  const lockedAfter = morning.length;
+  let route = [...morning];
+
+  const remainingLastDay = sales
+    .filter((sale) => sale.lastDay && !route.some((item) => item.id === sale.id))
+    .sort((a, b) => {
+      const closeA = closeOn(a, saturday) ?? "23:59";
+      const closeB = closeOn(b, saturday) ?? "23:59";
+      return parseClock(closeA) - parseClock(closeB);
+    });
+
+  for (const stop of remainingLastDay) {
+    route = cheapestInsert(start, route, stop, lockedAfter);
+  }
+
+  const optional = sales
+    .filter((sale) => !route.some((item) => item.id === sale.id))
+    .sort((a, b) => {
+      const closeA = closeOn(a, saturday) ?? "23:59";
+      const closeB = closeOn(b, saturday) ?? "23:59";
+      const closeCmp = parseClock(closeA) - parseClock(closeB);
+      if (closeCmp !== 0) return closeCmp;
+      const near = (sale: Sale) =>
+        Math.min(
+          driveMinutes(start, sale),
+          ...route.map((item) => driveMinutes(item, sale)),
+        );
+      return near(a) - near(b);
+    });
+
+  for (const stop of optional) {
+    route = cheapestInsert(start, route, stop, lockedAfter);
+  }
+
+  return route;
 }
 
 function assignRoles(sales: Sale[]): StopRole[] {

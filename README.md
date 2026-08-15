@@ -54,9 +54,10 @@ Free-flow Saturday order the router is tested against:
 
 1. Filter by date window and hunt-list tags.
 2. Saturday **morning musts** are sales that close by 2pm, visited in close-time order so a noon last-day stop is not buried behind a 5pm neighbor.
-3. Remaining Saturday stops are nearest-neighbor from the last morning must — a geographic sweep.
-4. Two-day sales that sit opposite that last-day backbone become **Sunday leftover**.
-5. Half-day mode drops a noon-close stop if it is 20+ minutes from the rest of the cluster.
+3. Remaining **last-day** stops are cheapest-inserted after those morning musts (never in front of a noon close).
+4. Other Saturday stops insert next, earliest close first, so a 3–4pm sale claims a slot before a 6:30pm flea.
+5. Two-day sales that sit opposite that last-day backbone become **Sunday leftover**.
+6. Half-day mode drops a noon-close stop if it is 20+ minutes from the rest of the cluster.
 
 Drive times are a free client-side estimate (haversine at urban speed). They do not require OSRM or a Google key.
 
