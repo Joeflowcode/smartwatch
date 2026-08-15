@@ -2,6 +2,7 @@
   "id": "salem-or",
   "name": "Salem, OR",
   "state": "OR",
+  "kind": "seed",
   "zips": [
     "97301",
     "97302",

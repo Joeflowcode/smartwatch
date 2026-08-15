@@ -10,6 +10,7 @@ export interface HuntPrefs {
   halfDay: boolean;
   departAt: string;
   pasted: string;
+  feedUrl: string;
 }
 
 export function loadPrefs(): Partial<HuntPrefs> {

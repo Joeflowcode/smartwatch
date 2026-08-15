@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Example feed stop (labeled example)",
+    "address": "1000 SW Broadway, Portland, OR 97205",
+    "lat": 45.517277,
+    "lng": -122.680657,
+    "lastDay": false,
+    "description": "Labeled example from /feeds/example.json. Vintage books. Not a real sale.",
+    "hours": [
+      { "date": "2026-08-15", "open": "09:00", "close": "14:00" }
+    ]
+  }
+]

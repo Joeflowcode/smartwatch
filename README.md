@@ -28,9 +28,10 @@ This app talks to a **data adapter**. It does **not** scrape EstateSales.net, Fa
 
 | Source | What it is | When it is used |
 | --- | --- | --- |
-| **Bundled demo seed** | Real Salem, OR addresses for Sat Aug 15–Sun Aug 16, 2026 | Default. Works offline. |
-| **Your pasted / uploaded JSON** | Sales you supply (name, address, lat/lng, hours, description) | When the paste box or file upload has a valid list |
-| **Licensed live feed** | Stub only | Not connected. Partner API keys on EstateSales.net are for companies *posting* their own sales, not reading the national directory. |
+| **Bundled Salem seed** | Real Salem, OR addresses for Sat Aug 15–Sun Aug 16, 2026 | Default city pack. Works offline. |
+| **Portland examples** | Real Portland streets, **labeled examples**, not this weekend’s sales | City pack chip “Portland, OR · examples” |
+| **Your pasted / uploaded list** | Messy text, JSON, or a photo (on-device OCR) | When the paste box or file upload has a usable list |
+| **JSON feed you host** | Same sale shape as paste. Optional `VITE_SALES_FEED_URL` or the feed URL field | When that URL returns sales. Same-origin `/feeds/example.json` is included. CORS failures go through `/api/feed` (https only). |
 
 Coordinates in the Salem seed were resolved with the public [US Census geocoder](https://geocoding.geo.census.gov/) for those exact addresses. Descriptions only use the facts in the seed brief. Category chips that come from title/description keywords are marked **inferred**.
 
@@ -68,7 +69,9 @@ Drive times are a free client-side estimate (haversine at urban speed). They do 
 3. Register the pack in `src/data/index.ts` (`CITY_PACKS`).
 4. Add a test in `src/test/` if the city has a known drive order.
 
-City packs are demo/seed files. They are not a live scrape. ZIP codes on the pack decide when the optional city/ZIP field selects that city.
+City packs are demo/seed files. They are not a live scrape. ZIP codes on the pack decide when the optional city/ZIP field selects that city. Set `kind` to `"seed"` for real weekend listings or `"example"` for clearly labeled examples.
+
+Portland is the second pack: labeled examples on Census-geocoded streets (Hawthorne, 28th, Alberta, St Johns, Pearl). Not live inventory.
 
 ## Paste format
 
@@ -86,13 +89,25 @@ JSON still works. `lat` / `lng` are optional when the address is already in a ci
 
 See `src/data/examples/user-sales.example.json`.
 
-The last start address, hunt chips, leave-at time, and pasted list are saved in the browser (`localStorage`). No account.
+The last start address, hunt chips, leave-at time, pasted list, and feed URL are saved in the browser (`localStorage`). **Copy share link** puts the hunt (not the pasted list) on the query string.
+
+Photo upload uses Tesseract in the browser. It is best-effort; if OCR is empty, paste the text.
+
+## JSON feed
+
+Host an array of sales (or `{ "sales": [...] }`) and paste the URL, or set:
+
+```bash
+VITE_SALES_FEED_URL=/feeds/example.json
+```
+
+This is for a list you control or a future licensed dump. It is not a scrape of EstateSales.net, Facebook, or Craigslist.
 
 ## Stack
 
 - Vite + React + TypeScript
 - Vitest for tagging and routing
-- Netlify (`netlify.toml` + optional `/api/geocode` Census proxy for start addresses that are not in the seed)
+- Netlify (`netlify.toml`, `/api/geocode` Census proxy, `/api/feed` https proxy)
 - Phone-first CSS, no account system
 
 ## Deploy

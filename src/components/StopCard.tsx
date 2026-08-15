@@ -40,6 +40,7 @@ export function StopCard({
           {stop.timingNote ? ` · ${stop.timingNote}` : ""}
         </p>
       ) : null}
+      {stop.leaveByLabel ? <p className="timing">{stop.leaveByLabel}</p> : null}
       {stop.sale.tags.length > 0 ? (
         <div className="tags">
           {stop.sale.tags.map((tag) => (

@@ -1,3 +1,5 @@
+import { CITY_PACKS } from "../data";
+import { isImageFile, readSalePhoto } from "../lib/ocr";
 import { CATEGORIES, type CategoryId } from "../types";
 
 interface HuntFormProps {
@@ -10,8 +12,10 @@ interface HuntFormProps {
   halfDay: boolean;
   departAt: string;
   pasted: string;
+  feedUrl: string;
   locating: boolean;
   busy: boolean;
+  readingPhoto: boolean;
   onAddress: (value: string) => void;
   onCity: (value: string) => void;
   onZip: (value: string) => void;
@@ -21,6 +25,9 @@ interface HuntFormProps {
   onHalfDay: (value: boolean) => void;
   onDepartAt: (value: string) => void;
   onPasted: (value: string) => void;
+  onFeedUrl: (value: string) => void;
+  onReadingPhoto: (value: boolean) => void;
+  onSelectPack: (packId: string) => void;
   onLocate: () => void;
   onThisWeekend: () => void;
   onSubmit: () => void;
@@ -50,6 +57,23 @@ export function HuntForm(props: HuntFormProps) {
         <button type="button" className="secondary" onClick={props.onLocate} disabled={props.locating}>
           {props.locating ? "Finding you…" : "Use my location"}
         </button>
+      </div>
+      <p className="section-label" style={{ margin: "0.85rem 0 0.55rem" }}>
+        City pack
+      </p>
+      <div className="chips">
+        {CITY_PACKS.map((pack) => (
+          <button
+            key={pack.id}
+            type="button"
+            className="chip"
+            aria-pressed={props.city.toLowerCase().includes(pack.name.split(",")[0].toLowerCase())}
+            onClick={() => props.onSelectPack(pack.id)}
+          >
+            {pack.name}
+            {pack.kind === "example" ? " · examples" : ""}
+          </button>
+        ))}
       </div>
       <div className="row">
         <label className="field">
@@ -152,15 +176,42 @@ export function HuntForm(props: HuntFormProps) {
           />
         </label>
         <label className="file-btn">
-          Upload JSON or text
+          Upload JSON, text, or photo
           <input
             type="file"
-            accept="application/json,.json,.txt,text/plain"
+            accept="application/json,.json,.txt,text/plain,image/*"
             onChange={async (event) => {
               const file = event.target.files?.[0];
               if (!file) return;
+              if (isImageFile(file)) {
+                props.onReadingPhoto(true);
+                try {
+                  const text = await readSalePhoto(file);
+                  if (!text) throw new Error("empty");
+                  props.onPasted(props.pasted ? `${props.pasted}\n\n${text}` : text);
+                } catch {
+                  props.onPasted(
+                    props.pasted ||
+                      "# Could not read that photo. Type or paste the sale list instead.",
+                  );
+                } finally {
+                  props.onReadingPhoto(false);
+                }
+                return;
+              }
               props.onPasted(await file.text());
             }}
+          />
+        </label>
+        {props.readingPhoto ? <p className="empty">Reading photo…</p> : null}
+        <label className="field">
+          <span>Optional feed URL</span>
+          <input
+            type="text"
+            inputMode="url"
+            value={props.feedUrl}
+            onChange={(event) => props.onFeedUrl(event.target.value)}
+            placeholder="/feeds/example.json"
           />
         </label>
       </details>

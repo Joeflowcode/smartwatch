@@ -10,9 +10,11 @@ import type {
 import { angleDegrees, driveMinutes, haversineMiles, toXY } from "./distance";
 import {
   closeOn,
+  formatClock,
   formatClose,
   formatDrive,
   formatHours,
+  hoursOnDate,
   isOpenOn,
   minutesToClock,
   parseClock,
@@ -326,6 +328,11 @@ function rankStops(
   return list.map((sale, index) => {
     const timing = timings[index];
     const tight = Boolean(timing && !timing.missed && timing.slack < 30);
+    const open = hoursOnDate(sale, date)?.open;
+    const leaveBy =
+      kind === "saturday" && index === 0 && timing && open
+        ? parseClock(open) - timing.drive
+        : undefined;
     return {
       sale,
       role: roles[index],
@@ -336,6 +343,10 @@ function rankStops(
       arriveLabel: timing ? `Arrive ${minutesToClock(timing.arrive)}` : undefined,
       leaveLabel: timing ? `leave ${minutesToClock(timing.leave)}` : undefined,
       driveLabel: timing ? formatDrive(timing.drive) : undefined,
+      leaveByLabel:
+        leaveBy !== undefined
+          ? `Leave by ${minutesToClock(leaveBy)} to arrive at the ${formatClock(open!)} open`
+          : undefined,
       timingNote: timing?.missed
         ? "Would miss the posted close"
         : tight

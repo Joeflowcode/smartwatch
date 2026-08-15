@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { HuntForm } from "./components/HuntForm";
 import { StopCard } from "./components/StopCard";
-import { CITY_PACKS } from "./data";
+import { CITY_PACKS, findCityPackById } from "./data";
 import { loadSales } from "./lib/adapter";
 import { licensedFeedAdapter } from "./lib/adapter/licensed";
 import { geocodeAddress } from "./lib/geocode";
 import { loadPrefs, savePrefs } from "./lib/prefs";
 import { planRoute } from "./lib/route";
+import { parseShare, shareUrl } from "./lib/share";
 import { formatDateRange } from "./lib/hours";
 import { thisWeekend } from "./lib/weekend";
 import type { CategoryId, HuntQuery, LatLng, RoutePlan, Sale } from "./types";
@@ -14,20 +15,26 @@ import type { CategoryId, HuntQuery, LatLng, RoutePlan, Sale } from "./types";
 const DEMO_START = CITY_PACKS[0].defaultStart;
 const weekend = thisWeekend();
 const saved = loadPrefs();
+const shared = typeof window === "undefined" ? {} : parseShare(window.location.search);
 
 export default function App() {
-  const [address, setAddress] = useState(saved.address ?? DEMO_START.label);
-  const [city, setCity] = useState(saved.city ?? "Salem");
-  const [zip, setZip] = useState(saved.zip ?? "97306");
+  const [address, setAddress] = useState(shared.address ?? saved.address ?? DEMO_START.label);
+  const [city, setCity] = useState(shared.city ?? saved.city ?? "Salem");
+  const [zip, setZip] = useState(shared.zip ?? saved.zip ?? "97306");
   const [windowStart, setWindowStart] = useState(weekend.start);
   const [windowEnd, setWindowEnd] = useState(weekend.end);
-  const [categories, setCategories] = useState<CategoryId[]>(saved.categories ?? []);
-  const [halfDay, setHalfDay] = useState(saved.halfDay ?? false);
-  const [departAt, setDepartAt] = useState(saved.departAt ?? "09:00");
+  const [categories, setCategories] = useState<CategoryId[]>(
+    shared.categories ?? saved.categories ?? [],
+  );
+  const [halfDay, setHalfDay] = useState(shared.halfDay ?? saved.halfDay ?? false);
+  const [departAt, setDepartAt] = useState(shared.departAt ?? saved.departAt ?? "09:00");
   const [pasted, setPasted] = useState(saved.pasted ?? "");
+  const [feedUrl, setFeedUrl] = useState(shared.feedUrl ?? saved.feedUrl ?? "");
   const [locating, setLocating] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [readingPhoto, setReadingPhoto] = useState(false);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
   const [plan, setPlan] = useState<RoutePlan | null>(null);
   const [feedNote, setFeedNote] = useState("");
   const [excludeIds, setExcludeIds] = useState<string[]>([]);
@@ -44,16 +51,27 @@ export default function App() {
       halfDay,
       departAt,
       excludeIds,
+      feedUrl,
     }),
-    [city, zip, windowStart, windowEnd, categories, halfDay, departAt, excludeIds],
+    [city, zip, windowStart, windowEnd, categories, halfDay, departAt, excludeIds, feedUrl],
   );
 
   useEffect(() => {
-    savePrefs({ address, city, zip, categories, halfDay, departAt, pasted });
-  }, [address, city, zip, categories, halfDay, departAt, pasted]);
+    savePrefs({ address, city, zip, categories, halfDay, departAt, pasted, feedUrl });
+  }, [address, city, zip, categories, halfDay, departAt, pasted, feedUrl]);
+
+  const activePack =
+    findCityPackById(
+      CITY_PACKS.find((pack) => city.toLowerCase().includes(pack.name.split(",")[0].toLowerCase()))
+        ?.id ?? "",
+    ) ?? CITY_PACKS[0];
 
   async function build(
-    nextStart = here ?? { label: address, lat: DEMO_START.lat, lng: DEMO_START.lng },
+    nextStart = here ?? {
+      label: address,
+      lat: activePack.defaultStart.lat,
+      lng: activePack.defaultStart.lng,
+    },
     nextExclude = excludeIds,
     reuseSales?: Sale[],
   ) {
@@ -69,10 +87,10 @@ export default function App() {
       if (
         !resolved &&
         !here &&
-        nextStart.label !== DEMO_START.label &&
-        nextStart.lat === DEMO_START.lat
+        nextStart.label !== activePack.defaultStart.label &&
+        nextStart.lat === activePack.defaultStart.lat
       ) {
-        setError("Could not geocode that start address. Using the Salem demo pin, or tap Use my location.");
+        setError("Could not geocode that start address. Using the city-pack pin, or tap Use my location.");
       }
 
       const query: HuntQuery = {
@@ -83,11 +101,11 @@ export default function App() {
       };
       const loaded = reuseSales
         ? { sales: reuseSales, note: plan?.sourceNote ?? "Using the current list." }
-        : await loadSales(query, pasted);
+        : await loadSales(query, pasted, feedUrl);
       if (!reuseSales) setSalesCache(loaded.sales);
       const nextPlan = planRoute(loaded.sales, query, loaded.note);
       setPlan(nextPlan);
-      const stub = await licensedFeedAdapter.load(query);
+      const stub = await licensedFeedAdapter(feedUrl).load(query);
       setFeedNote(stub.note);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not build a route.");
@@ -100,6 +118,16 @@ export default function App() {
     setCategories((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
+  }
+
+  function selectPack(packId: string) {
+    const pack = findCityPackById(packId);
+    if (!pack) return;
+    setCity(pack.name.split(",")[0]);
+    setZip(pack.defaultStart.label.match(/\b(\d{5})\b/)?.[1] ?? pack.zips[0] ?? "");
+    setAddress(pack.defaultStart.label);
+    setHere(null);
+    setExcludeIds([]);
   }
 
   function locate() {
@@ -132,7 +160,11 @@ export default function App() {
   function skipStop(id: string) {
     const next = [...new Set([...excludeIds, id])];
     setExcludeIds(next);
-    void build(here ?? { label: address, lat: DEMO_START.lat, lng: DEMO_START.lng }, next, salesCache);
+    void build(here ?? {
+      label: address,
+      lat: activePack.defaultStart.lat,
+      lng: activePack.defaultStart.lng,
+    }, next, salesCache);
   }
 
   function startHere(id: string) {
@@ -160,7 +192,30 @@ export default function App() {
   function resetProgress() {
     setHere(null);
     setExcludeIds([]);
-    void build({ label: address, lat: DEMO_START.lat, lng: DEMO_START.lng }, [], salesCache);
+    void build({
+      label: address,
+      lat: activePack.defaultStart.lat,
+      lng: activePack.defaultStart.lng,
+    }, [], salesCache);
+  }
+
+  async function copyShare() {
+    const url = shareUrl(window.location.origin, window.location.pathname, {
+      address,
+      city,
+      zip,
+      categories,
+      halfDay,
+      departAt,
+      feedUrl,
+    });
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("Could not copy the share link.");
+    }
   }
 
   return (
@@ -174,8 +229,8 @@ export default function App() {
       </header>
 
       <p className="banner">
-        Demo seed is on. Live national directories are not scraped. Paste your
-        own list or wait for a licensed feed.
+        Demo seed is on. Live national directories are not scraped. Paste a
+        list, read a photo, or point at a JSON feed you host.
       </p>
 
       <HuntForm
@@ -188,8 +243,10 @@ export default function App() {
         halfDay={halfDay}
         departAt={departAt}
         pasted={pasted}
+        feedUrl={feedUrl}
         locating={locating}
         busy={busy}
+        readingPhoto={readingPhoto}
         onAddress={setAddress}
         onCity={setCity}
         onZip={setZip}
@@ -199,6 +256,9 @@ export default function App() {
         onHalfDay={setHalfDay}
         onDepartAt={setDepartAt}
         onPasted={setPasted}
+        onFeedUrl={setFeedUrl}
+        onReadingPhoto={setReadingPhoto}
+        onSelectPack={selectPack}
         onLocate={locate}
         onThisWeekend={() => {
           const next = thisWeekend();
@@ -208,7 +268,11 @@ export default function App() {
         onSubmit={() => {
           setHere(null);
           setExcludeIds([]);
-          void build({ label: address, lat: DEMO_START.lat, lng: DEMO_START.lng }, []);
+          void build({
+            label: address,
+            lat: activePack.defaultStart.lat,
+            lng: activePack.defaultStart.lng,
+          }, []);
         }}
       />
 
@@ -270,6 +334,10 @@ export default function App() {
               ))}
             </>
           ) : null}
+
+          <button type="button" className="secondary" style={{ width: "100%" }} onClick={() => void copyShare()}>
+            {copied ? "Link copied" : "Copy share link"}
+          </button>
 
           <details className="details card">
             <summary>Demo vs live data</summary>

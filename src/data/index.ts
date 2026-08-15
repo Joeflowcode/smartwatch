@@ -1,8 +1,9 @@
 import salem from "./cities/salem-or.json";
+import portland from "./cities/portland-or.json";
 import type { CityPack, Sale } from "../types";
 import { inferTags } from "../lib/tags";
 
-export const CITY_PACKS: CityPack[] = [salem as CityPack];
+export const CITY_PACKS: CityPack[] = [salem as CityPack, portland as CityPack];
 
 export function hydrateCityPack(pack: CityPack): Sale[] {
   return pack.sales.map((raw) => ({
@@ -35,4 +36,8 @@ export function findCityPack(city?: string, zip?: string): CityPack | undefined 
   }
 
   return CITY_PACKS[0];
+}
+
+export function findCityPackById(id: string): CityPack | undefined {
+  return CITY_PACKS.find((pack) => pack.id === id);
 }

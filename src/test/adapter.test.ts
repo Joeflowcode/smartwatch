@@ -30,7 +30,7 @@ describe("user adapter", () => {
 
 describe("licensed feed stub", () => {
   it("returns no sales and explains why", async () => {
-    const result = await licensedFeedAdapter.load({
+    const result = await licensedFeedAdapter().load({
       start: { lat: 0, lng: 0 },
       startLabel: "",
       windowStart: "2026-08-15",
@@ -40,6 +40,25 @@ describe("licensed feed stub", () => {
     });
     expect(result.sales).toEqual([]);
     expect(result.source).toBe("licensed-feed");
-    expect(result.note.toLowerCase()).toContain("not connected");
+    expect(result.note.toLowerCase()).toMatch(/not connected|no public read api/);
+  });
+
+  it("parses a hosted feed JSON array", async () => {
+    const { parseUserSales } = await import("../lib/adapter/user");
+    const sales = parseUserSales(
+      JSON.stringify([
+        {
+          name: "Example feed stop (labeled example)",
+          address: "1000 SW Broadway, Portland, OR 97205",
+          lat: 45.517277,
+          lng: -122.680657,
+          description: "Labeled example. Vintage books. Not a real sale.",
+          hours: [{ date: "2026-08-15", open: "09:00", close: "14:00" }],
+        },
+      ]),
+      ["2026-08-15", "2026-08-16"],
+    );
+    expect(sales).toHaveLength(1);
+    expect(sales[0]?.name).toMatch(/labeled example/i);
   });
 });
