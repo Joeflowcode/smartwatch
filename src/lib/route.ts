@@ -11,8 +11,10 @@ import { angleDegrees, driveMinutes, haversineMiles, toXY } from "./distance";
 import {
   closeOn,
   formatClose,
+  formatDrive,
   formatHours,
   isOpenOn,
+  minutesToClock,
   parseClock,
 } from "./hours";
 import { stopMapsUrl, routeMapsUrl } from "./maps";
@@ -24,6 +26,7 @@ const HALF_DAY_OUTLIER_MINUTES = 20;
 const END_EXTENSION_MILES = 4.5;
 const OPPOSITE_ANGLE = 110;
 const OPPOSITE_MIN_MILES = 1.5;
+export const DWELL_MINUTES = 25;
 
 export interface PartitionedSales {
   saturday: Sale[];
@@ -224,6 +227,45 @@ export function orderSaturday(start: LatLng, sales: Sale[], saturday: string): S
   return route;
 }
 
+export interface StopTiming {
+  arrive: number;
+  leave: number;
+  drive: number;
+  missed: boolean;
+  slack: number;
+}
+
+export function timeStops(
+  start: LatLng,
+  sales: Sale[],
+  date: string,
+  departMinutes: number,
+  dwell = DWELL_MINUTES,
+): StopTiming[] {
+  const timings: StopTiming[] = [];
+  let current = start;
+  let clock = departMinutes;
+
+  for (const sale of sales) {
+    const drive = driveMinutes(current, sale);
+    const arrive = clock + drive;
+    const close = closeOn(sale, date);
+    const closeMin = close ? parseClock(close) : 24 * 60;
+    const slack = closeMin - arrive;
+    timings.push({
+      arrive,
+      leave: arrive + dwell,
+      drive,
+      missed: slack < 0,
+      slack,
+    });
+    current = sale;
+    clock = arrive + dwell;
+  }
+
+  return timings;
+}
+
 function assignRoles(sales: Sale[]): StopRole[] {
   return sales.map((_, index) => {
     if (index === 0) return "first";
@@ -239,17 +281,20 @@ function whyFor(
   kind: "saturday" | "sunday" | "skipped",
   categories: CategoryId[],
 ): string {
+  const huntHits = sale.tags
+    .filter((tag) => categories.includes(tag.id))
+    .map((tag) => tag.label.toLowerCase());
+
   if (kind === "skipped") {
     return "Half-day skip: early close 20+ minutes off the main cluster.";
   }
   if (kind === "sunday") {
-    return "Open Sunday and off the Saturday sweep — leftover pocket.";
+    return huntHits.length
+      ? `Sunday leftover pocket. Listing points to ${huntHits.join(", ")}.`
+      : "Open Sunday and off the Saturday sweep — leftover pocket.";
   }
 
   const close = closeOn(sale, saturday);
-  const huntHits = sale.tags
-    .filter((tag) => categories.includes(tag.id))
-    .map((tag) => tag.label.toLowerCase());
 
   if (sale.lastDay && close && parseClock(close) <= parseClock("13:00")) {
     return `Last day, closes ${close === "12:00" ? "noon" : "1pm"} — go now or miss it.`;
@@ -266,6 +311,41 @@ function whyFor(
   return "On the Saturday sweep.";
 }
 
+function rankStops(
+  list: Sale[],
+  kind: "saturday" | "sunday" | "skipped",
+  date: string,
+  query: HuntQuery,
+  saturday: string,
+  departMinutes: number,
+): RankedStop[] {
+  const roles = assignRoles(list);
+  const timings =
+    kind === "skipped" ? [] : timeStops(query.start, list, date, departMinutes);
+
+  return list.map((sale, index) => {
+    const timing = timings[index];
+    const tight = Boolean(timing && !timing.missed && timing.slack < 30);
+    return {
+      sale,
+      role: roles[index],
+      why: whyFor(sale, roles[index], saturday, kind, query.categories),
+      mapsUrl: stopMapsUrl(sale.address, query.startLabel),
+      closeLabel: formatClose(sale, date),
+      hoursLabel: formatHours(sale),
+      arriveLabel: timing ? `Arrive ${minutesToClock(timing.arrive)}` : undefined,
+      leaveLabel: timing ? `leave ${minutesToClock(timing.leave)}` : undefined,
+      driveLabel: timing ? formatDrive(timing.drive) : undefined,
+      timingNote: timing?.missed
+        ? "Would miss the posted close"
+        : tight
+          ? "Tight on the close"
+          : undefined,
+      missed: timing?.missed,
+    };
+  });
+}
+
 export function planRoute(
   sales: Sale[],
   query: HuntQuery,
@@ -273,14 +353,17 @@ export function planRoute(
 ): RoutePlan {
   const saturday = saturdayOf(query.windowStart, query.windowEnd);
   const sunday = sundayOf(query.windowStart, query.windowEnd);
+  const exclude = new Set(query.excludeIds ?? []);
+  const departMinutes = parseClock(query.departAt ?? "09:00");
 
   const inWindow = sales.filter((sale) =>
     sale.hours.some(
       (entry) => entry.date >= query.windowStart && entry.date <= query.windowEnd,
     ),
   );
-  const filtered = inWindow.filter((sale) =>
-    saleMatchesCategories(sale.tags, query.categories),
+  const filtered = inWindow.filter(
+    (sale) =>
+      !exclude.has(sale.id) && saleMatchesCategories(sale.tags, query.categories),
   );
 
   const parts = partitionSales(
@@ -291,30 +374,28 @@ export function planRoute(
     query.halfDay,
   );
   const ordered = orderSaturday(query.start, parts.saturday, saturday);
-
-  const rank = (
-    list: Sale[],
-    kind: "saturday" | "sunday" | "skipped",
-    date: string,
-  ): RankedStop[] => {
-    const roles = assignRoles(list);
-    return list.map((sale, index) => ({
-      sale,
-      role: roles[index],
-      why: whyFor(sale, roles[index], saturday, kind, query.categories),
-      mapsUrl: stopMapsUrl(sale.address, query.startLabel),
-      closeLabel: formatClose(sale, date),
-      hoursLabel: formatHours(sale),
-    }));
-  };
+  const sundayOrdered = sunday
+    ? orderSaturday(query.start, parts.sunday, sunday)
+    : parts.sunday;
 
   return {
-    saturday: rank(ordered, "saturday", saturday),
-    sunday: rank(parts.sunday, "sunday", sunday ?? saturday),
-    skipped: rank(parts.skipped, "skipped", saturday),
+    saturday: rankStops(ordered, "saturday", saturday, query, saturday, departMinutes),
+    sunday: rankStops(
+      sundayOrdered,
+      "sunday",
+      sunday ?? saturday,
+      query,
+      saturday,
+      departMinutes,
+    ),
+    skipped: rankStops(parts.skipped, "skipped", saturday, query, saturday, departMinutes),
     mapsUrl: routeMapsUrl(
       query.startLabel,
       ordered.map((sale) => sale.address),
+    ),
+    sundayMapsUrl: routeMapsUrl(
+      query.startLabel,
+      sundayOrdered.map((sale) => sale.address),
     ),
     sourceNote,
   };

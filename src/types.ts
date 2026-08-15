@@ -77,6 +77,11 @@ export interface RankedStop {
   mapsUrl: string;
   closeLabel: string;
   hoursLabel: string;
+  arriveLabel?: string;
+  leaveLabel?: string;
+  driveLabel?: string;
+  timingNote?: string;
+  missed?: boolean;
 }
 
 export interface RoutePlan {
@@ -84,6 +89,7 @@ export interface RoutePlan {
   sunday: RankedStop[];
   skipped: RankedStop[];
   mapsUrl: string | null;
+  sundayMapsUrl: string | null;
   sourceNote: string;
 }
 
@@ -96,6 +102,8 @@ export interface HuntQuery {
   windowEnd: string;
   categories: CategoryId[];
   halfDay: boolean;
+  departAt?: string;
+  excludeIds?: string[];
 }
 
 export interface AdapterResult {

@@ -102,9 +102,9 @@ a {
 .app {
   width: min(32rem, 100%);
   margin: 0 auto;
-  padding: 1rem 1rem 7.5rem;
+  padding: 1rem 1rem 9.5rem;
   padding-top: max(1rem, env(safe-area-inset-top));
-  padding-bottom: max(7.5rem, calc(6.5rem + env(safe-area-inset-bottom)));
+  padding-bottom: max(9.5rem, calc(8.5rem + env(safe-area-inset-bottom)));
 }
 
 .masthead {
@@ -301,6 +301,38 @@ textarea {
   font-size: 1rem;
 }
 
+.timing {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.timing.missed {
+  color: var(--last);
+}
+
+.stop-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+}
+
+.text-btn {
+  min-height: auto;
+  padding: 0;
+  background: none;
+  color: var(--rust);
+  text-decoration: underline;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -343,6 +375,8 @@ textarea {
   bottom: 0;
   transform: translateX(-50%);
   width: min(32rem, 100%);
+  display: grid;
+  gap: 0.5rem;
   padding: 0.75rem 1rem max(0.85rem, env(safe-area-inset-bottom));
   background: linear-gradient(to top, var(--paper) 70%, transparent);
 }

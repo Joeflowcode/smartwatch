@@ -5,7 +5,7 @@ import { userAdapter } from "./user";
 
 export { demoAdapter } from "./demo";
 export { licensedFeedAdapter } from "./licensed";
-export { userAdapter, parseUserSales } from "./user";
+export { userAdapter, parseUserSales, parseUserSalesAsync } from "./user";
 
 export async function loadSales(
   query: HuntQuery,

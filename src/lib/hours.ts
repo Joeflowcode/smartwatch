@@ -15,6 +15,18 @@ export function formatClock(hhmm: string): string {
   return `${hour}:${String(mRaw).padStart(2, "0")}${suffix}`;
 }
 
+export function minutesToClock(total: number): string {
+  const wrapped = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
+  const hours = Math.floor(wrapped / 60);
+  const minutes = wrapped % 60;
+  return formatClock(`${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`);
+}
+
+export function formatDrive(minutes: number): string {
+  const rounded = Math.max(1, Math.round(minutes));
+  return `${rounded} min drive`;
+}
+
 export function weekdayShort(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
   const utc = new Date(Date.UTC(year, month - 1, day));

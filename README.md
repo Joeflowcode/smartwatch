@@ -20,7 +20,7 @@ npm run build     # production build
 
 No accounts. No paid Google key. The ordered list is computed in the browser from coordinates + hours. Maps buttons are Google Maps driving deep links.
 
-**Success check:** enter `1980 Madras St SE, Salem, OR 97306`, leave the date window on this weekend (Sat Aug 15–Sun Aug 16, 2026), tap **Electronics** and **Vintage**, then **Build route**. You should see a FIRST / NEXT / LAST Saturday list with inferred tags, close times, and working Maps links.
+**Success check:** enter `1980 Madras St SE, Salem, OR 97306`, leave the date window on this weekend (Sat Aug 15–Sun Aug 16, 2026), tap **Electronics** and **Vintage**, then **Build route**. You should see a FIRST / NEXT / LAST Saturday list with inferred tags, arrival times, close times, and working Maps links. Sunday leftover has its own Maps link. **Skip** and **Start here** rebuild the rest of the sweep.
 
 ## Demo vs live data
 
@@ -72,23 +72,21 @@ City packs are demo/seed files. They are not a live scrape. ZIP codes on the pac
 
 ## Paste format
 
-```json
-[
-  {
-    "name": "Example garage sale (labeled example)",
-    "address": "350 Commercial St NE, Salem, OR 97301",
-    "lat": 44.9412,
-    "lng": -123.0395,
-    "lastDay": false,
-    "description": "Tools, records, and a stereo. Clearly labeled example.",
-    "hours": [
-      { "date": "2026-08-15", "open": "08:00", "close": "14:00" }
-    ]
-  }
-]
+Messy notes work if each sale has a name, a US `street, city, ST ZIP` address, and Sat/Sun hours:
+
+```
+Independence Pickin Sale
+115 S 6th St, Independence, OR 97351
+Sat 9am-12pm LAST DAY
+
+Lion Heart — 860 Salem Heights Ave S, Salem, OR 97302 — Sat 9am–1pm LAST DAY — antiques
 ```
 
-See `src/data/examples/user-sales.example.json`. Hours can also be a string such as `Sat/Sun 9am–3pm`.
+JSON still works. `lat` / `lng` are optional when the address is already in a city pack (or when `/api/geocode` can resolve it). Hours can be a string such as `Sat/Sun 9am–3pm`.
+
+See `src/data/examples/user-sales.example.json`.
+
+The last start address, hunt chips, leave-at time, and pasted list are saved in the browser (`localStorage`). No account.
 
 ## Stack
 

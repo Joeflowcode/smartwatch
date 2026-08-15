@@ -8,6 +8,7 @@ interface HuntFormProps {
   windowEnd: string;
   categories: CategoryId[];
   halfDay: boolean;
+  departAt: string;
   pasted: string;
   locating: boolean;
   busy: boolean;
@@ -18,6 +19,7 @@ interface HuntFormProps {
   onWindowEnd: (value: string) => void;
   onToggleCategory: (id: CategoryId) => void;
   onHalfDay: (value: boolean) => void;
+  onDepartAt: (value: string) => void;
   onPasted: (value: string) => void;
   onLocate: () => void;
   onThisWeekend: () => void;
@@ -88,9 +90,22 @@ export function HuntForm(props: HuntFormProps) {
           />
         </label>
       </div>
-      <button type="button" className="ghost" onClick={props.onThisWeekend}>
-        This weekend
-      </button>
+      <div className="row">
+        <label className="field">
+          <span>Leave at</span>
+          <input
+            type="time"
+            value={props.departAt}
+            onChange={(event) => props.onDepartAt(event.target.value)}
+          />
+        </label>
+        <div className="field">
+          <span>&nbsp;</span>
+          <button type="button" className="ghost" onClick={props.onThisWeekend}>
+            This weekend
+          </button>
+        </div>
+      </div>
       <p className="section-label" style={{ margin: "1rem 0 0.55rem" }}>
         Hunt list
       </p>
@@ -124,22 +139,23 @@ export function HuntForm(props: HuntFormProps) {
       <details className="details">
         <summary>Paste or upload a sale list</summary>
         <p className="empty">
-          JSON array with name, address, lat, lng, hours, and description.
-          Inferred tags are marked. This is your list — not a live scrape.
+          Paste messy notes or JSON. A name, US address, and Sat/Sun hours
+          are enough — coordinates are filled from the seed or the Census
+          geocoder. This is your list, not a live scrape.
         </p>
         <label className="field">
-          <span>Pasted JSON</span>
+          <span>Pasted sales</span>
           <textarea
             value={props.pasted}
             onChange={(event) => props.onPasted(event.target.value)}
-            placeholder='[{"name":"Example","address":"...","lat":44.9,"lng":-123.0,"hours":[{"date":"2026-08-15","open":"09:00","close":"14:00"}],"description":"tools"}]'
+            placeholder={"Lion Heart — 860 Salem Heights Ave S, Salem, OR 97302 — Sat 9am–1pm LAST DAY — antiques\n\nIndependence Pickin Sale\n115 S 6th St, Independence, OR 97351\nSat 9am-12pm LAST DAY"}
           />
         </label>
         <label className="file-btn">
-          Upload JSON
+          Upload JSON or text
           <input
             type="file"
-            accept="application/json,.json"
+            accept="application/json,.json,.txt,text/plain"
             onChange={async (event) => {
               const file = event.target.files?.[0];
               if (!file) return;
